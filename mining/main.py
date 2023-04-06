@@ -1,14 +1,27 @@
 from flight_miner import FlightMiner
+from weather_miner import WeatherMiner
 
 # Replace YOUR_USERNAME and YOUR_API_KEY with your actual FlightAware username and API key
-username = 'tarineccleston'
-api_key = 'nSjnCeqBjSjB1aTCWTV7UE0xdkumBZ38'
+# for FlightAware
+username_fw = 'tarineccleston'
+api_key_fw = 'nSjnCeqBjSjB1aTCWTV7UE0xdkumBZ38'
+
+# for OpenWeather
+username_ow = 'tarineccleston'
+api_key_ow = 'bedf9c9a36ed35c1ac48bc3242e96be1'
 
 def main():
-    flight_mine = FlightMiner(username, api_key)
-    flights = flight_mine.get_random_flights(departure_country="United States")
+    # 
+    # flight_mine = FlightMiner(username, api_key)
+    # flights = flight_mine.get_random_flights(departure_country="United States")
 
-    print(flights)
+    # print(flights)
+
+    airport_code = "JFK"
+    timestamp = "1649214000"
+
+    weather_miner = WeatherMiner(username_ow, api_key_ow)
+    weather_miner.get_weather_event(airport_code, timestamp)
 
 if __name__ == "__main__": {
     main()

@@ -24,12 +24,12 @@ class FlightMiner:
         # Make API request for random flights
         airport = 'KSFO'
         payload = {
-            'max_pages': 2
+            'max_pages': 1,
             # "howMany": 1,
             # "offset": 0,
             # "filter": "ga",
-            # "startDate": start_date,
-            # "endDate": end_date,
+            "start": start_date,
+            "end": end_date
             # "originCountry": departure_country
         }
 
