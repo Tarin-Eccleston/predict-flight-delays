@@ -11,17 +11,16 @@ username_ow = 'tarineccleston'
 api_key_ow = 'bedf9c9a36ed35c1ac48bc3242e96be1'
 
 def main():
-    # 
-    # flight_mine = FlightMiner(username, api_key)
-    # flights = flight_mine.get_random_flights(departure_country="United States")
 
-    # print(flights)
+    flight_mine = FlightMiner(username_fw, api_key_fw)
+    flight_mine.get_random_flights("United States")
 
-    airport_code = "JFK"
-    timestamp = "1649214000"
+    # weather mining section
+    # airport_code = "JFK"
+    # timestamp = "1649214000"
 
-    weather_miner = WeatherMiner(username_ow, api_key_ow)
-    weather_miner.get_weather_event(airport_code, timestamp)
+    # weather_miner = WeatherMiner(username_ow, api_key_ow)
+    # weather_miner.get_weather_event(airport_code, timestamp)
 
 if __name__ == "__main__": {
     main()
