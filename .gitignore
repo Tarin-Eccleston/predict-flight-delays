@@ -1,2 +1,3 @@
 data/flights.csv
 .DS_Store
+.env
