@@ -1,0 +1,36 @@
+---
+output:
+  pdf_document: default
+---
+## Milestone 2 - Predict Flight Delays
+### Tarin Eccleston
+
+### 1. Goal
+
+The main objective of my project is to analysis the 
+
+
+### 2. Data Source
+
+Talk about process of getting data, issues with getting flight data through APIs
+- FAA Data through Kaggle
+- Weather data through OpenWeather
+
+```{r}
+
+```
+
+### 3. Data Processing
+
+
+
+### 4. Data Exploration
+
+- 4.1 Question 1:
+- 4.2 Question 2:
+- 4.3 Question 3:
+
+### 5. Analytical Plan
+
+
+### 6. Appendix

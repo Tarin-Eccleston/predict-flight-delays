@@ -92,3 +92,6 @@ flights_processed_df = flights_processed_df %>%
 # most useful time variables when making a prediction
 # convert SCHEDULED_DEPARTURE datetime object
 flights_processed_df = mutate(flights_processed_df, SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(YEAR, MONTH, DAY, SCHEDULED_DEPARTURE), format = "%Y %m %d %H:%M"))
+
+# save data for exploratory analysis
+save(flights_processed_df, file = "output/flights.RData")
