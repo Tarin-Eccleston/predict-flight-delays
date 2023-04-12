@@ -1,4 +1,5 @@
 data/flights.csv
+output/flights.csv
 *.DS_Store
 *.RData
 *.Rhistory

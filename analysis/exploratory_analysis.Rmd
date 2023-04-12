@@ -5,12 +5,12 @@ output:
 ## Milestone 2 - Predict Flight Delays
 ### Tarin Eccleston
 
-### 1. Goal
+## 1. Goal
 
-The main objective of my project is to analysis the 
+The main objective of my project is to analyse the 
 
 
-### 2. Data Source
+## 2. Data Source
 
 Talk about process of getting data, issues with getting flight data through APIs
 - FAA Data through Kaggle
@@ -20,17 +20,53 @@ Talk about process of getting data, issues with getting flight data through APIs
 
 ```
 
-### 3. Data Processing
+## 3. Data Processing
+
+- 
+
+## 4. Data Exploration
+
+Let's take a quick look at our data...
+
+```{r}
+setwd("/Users/tarineccleston/Documents/Software:DS/predict-flight-delays")
+library(tidyverse)
+
+flights_df = read.csv("../output/flights.csv")
+```
+
+```{r}
+glimpse(flights_df)
+```
+
+```{r}
+
+```
 
 
+### 4.1 Question 1: Flight Delays between airports
 
-### 4. Data Exploration
+The original exploration question was to compare flight delays between airports. Are some airports more likely to have flight delays due to a variety of factors which cannot be accounted for in the data, such as operation issues?
 
-- 4.1 Question 1:
+Luckily our data gies us the number of minutes delayed due to air system, security, airline, late aircraft and weather. 
+
 - 4.2 Question 2:
 - 4.3 Question 3:
 
-### 5. Analytical Plan
+## 5. Analytical Plan
 
 
-### 6. Appendix
+## 6. Appendix
+
+## Data cleaning
+
+```{r}
+
+```
+
+### Python Code to Extract Weather Data
+
+```{r}
+
+```
+
