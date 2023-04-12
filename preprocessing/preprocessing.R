@@ -128,5 +128,8 @@ on_time_flights_subset_df = flights_processed_df %>%
 flights_subset_df = rbind(delayed_flights_subset_df, on_time_flights_subset_df)
 flights_subset_df <- flights_subset_df[sample(nrow(flights_subset_df)), ]
 
+# save subset data for exploratory analysis
+save(flights_subset_df, file = "output/flights_subset.RData")
+write.table(flights_subset_df, file = "output/flights_subset.csv", sep = ",", row.names = FALSE)
 
 
