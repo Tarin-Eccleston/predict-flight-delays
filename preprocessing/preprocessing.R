@@ -105,6 +105,28 @@ flights_processed_df = flights_processed_df %>%
   mutate(INDEX = row.names(flights_processed_df)) %>%
   relocate(INDEX, .before = "FLIGHT_DATETIME")
 
-# save data for exploratory analysis
+# save whole data for exploratory analysis
 save(flights_processed_df, file = "output/flights.RData")
 write.table(flights_processed_df, file = "output/flights.csv", sep = ",", row.names = FALSE)
+
+# create n sample subset from our original data
+# this will be used for gathering weather data and for building our model
+set.seed("991")
+n = 2000
+
+# randomly sample 1000 delayed flights
+delayed_flights_subset_df = flights_processed_df %>%
+  filter(IS_WEATHER_DELAY == TRUE) %>%
+  sample_n(n/2)
+
+# randomly sample 1000 on-time flights
+on_time_flights_subset_df = flights_processed_df %>%
+  filter(IS_WEATHER_DELAY == FALSE) %>%
+  sample_n(n/2)
+
+# combine and shuffle data sets
+flights_subset_df = rbind(delayed_flights_subset_df, on_time_flights_subset_df)
+flights_subset_df <- flights_subset_df[sample(nrow(flights_subset_df)), ]
+
+
+
