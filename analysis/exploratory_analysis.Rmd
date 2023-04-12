@@ -9,11 +9,11 @@ output:
 
 The main objective of my project is to analyse the 
 
-
 ## 2. Data Source
 
 Talk about process of getting data, issues with getting flight data through APIs
 - FAA Data through Kaggle
+  - Issues getting recent data
 - Weather data through OpenWeather
 
 ```{r}
@@ -22,7 +22,13 @@ Talk about process of getting data, issues with getting flight data through APIs
 
 ## 3. Data Processing
 
-- 
+- Removing unneed cols
+- joining dataframes
+- Sum up delay times, and make true / false
+- Convert days of week to strings
+- Converting time format
+- Datetime objects
+- Creating subset for weather data / analysis
 
 ## 4. Data Exploration
 
@@ -31,16 +37,65 @@ Let's take a quick look at our data...
 ```{r}
 setwd("/Users/tarineccleston/Documents/Software:DS/predict-flight-delays")
 library(tidyverse)
+library(ggplot2)
+library(ggmap)
+library(maps)
+library(skimr)
 
-flights_df = read.csv("../output/flights.csv")
+load("../output/flights.RData")
+airports_df = read.csv("../data/airports.csv")
 ```
 
+Summary of our data
+
 ```{r}
-glimpse(flights_df)
+skim(flights_processed_df)
 ```
 
-```{r}
+We would like our data to be quite comprehensive of all domestic flights in the US. Therefore this map shows the variation of airport locations throughout the US. It is important to get a variety of departure airport locations as this would give us a variation in weather conditions throughout the year.
 
+```{r}
+usa = map_data("usa")
+
+airports_df = na.omit(airports_df)
+
+ggplot() + 
+  geom_polygon(data = usa, aes(x = long, y = lat, group = group), fill = "white", colour = "black") +
+  geom_point(data = airports_df, aes(x = LONGITUDE, y = LATITUDE, color = Airport), size = 0.1, colour = "red") +
+  geom_path(data = flight_processed_df, aes(xend = LONGITUDE.y, yend = LATITUDE.y), color = "red", size = 0.5) +
+  coord_fixed() +
+  labs(title = "Airports in the US")
+```
+
+We then check to see if flight dates are uniformly distributed across all days in 2015. This allows us to capture changes in seasons, and holidays. There is a section of data missing from October 15th to November 15th. After investigating the preprocessing phase, it appears that observations between these two times have been originally included however each observation has numeric airport codes instead of IATA codes. These observations are removed after inner joining with the airports dataframe as we are joining by IATA code to get airport names and coordinates. Since we cannot associate the an airport to flights within this period, we cannot find the weather for flights between October 15th and November 15th. Since our goal is to make a prediction on future flight delays, we cannot include this data as we cannot train our model without weather information attributed to the flights.
+
+Extreme weather events such as hurricanes, tropical storms, and winter storms can occur during October 15th and November 15th. It is important to note this as it could affect our data analysis and model by causing some bias. However I believe we have plenty of data from adjacent months to capture these extreme weather events.
+
+```{r}
+flights_processed_df$FLIGHT_DATETIME <- as.Date(flights_processed_df$FLIGHT_DATETIME)
+
+ggplot(flights_processed_df, aes(x = FLIGHT_DATETIME)) +
+  geom_histogram(binwidth = 1, color = "black", fill = "white") +
+  scale_x_date(date_breaks = "1 month", date_labels = "%b %y") +
+  labs(x = "Date", y = "Number of flights", title = "Distribution of flights per day in 2015")
+```
+
+
+
+```{r}
+flight_delays_avg <- flights_processed_df %>% 
+  group_by(ORIGIN_AIRPORT) %>% 
+  summarize(avg_delay = mean(DEPARTURE_DELAY))
+
+# find the top 10 most delayed airports
+flight_delays_avg_head = flight_delays_avg[order(flight_delays_avg$avg_delay, decreasing = TRUE),]
+flight_delays_avg_head = head(flight_delays_avg_head, n = 10)
+
+ggplot(flight_delays_avg_head, aes(x = ORIGIN_AIRPORT, y = avg_delay)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Top 10 Most Delayed Airports") +
+  xlab("Destination Airport") + ylab("Mean Arrival Delay (minutes)") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 

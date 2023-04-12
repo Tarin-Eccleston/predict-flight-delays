@@ -1,5 +1,6 @@
 setwd("/Users/tarineccleston/Documents/Software:DS/predict-flight-delays")
 library(tidyverse)
+library(ggplot2)
 
 # read data
 flights_df = read.csv("data/flights.csv")
@@ -13,12 +14,12 @@ flights_processed_df = data.frame(flights_df)
 flights_processed_df = flights_processed_df %>%
   select(-c("TAXI_OUT", "WHEELS_OFF", "SCHEDULED_TIME", "ELAPSED_TIME", "AIR_TIME", "DISTANCE", "WHEELS_ON", "TAXI_IN", "SCHEDULED_ARRIVAL", "ARRIVAL_TIME", "ARRIVAL_DELAY", "DIVERTED"))
 
-# join dataframes
+# join dataframes, use inner join for important information such as airline, departure and arrival airport
 # join flights and airline carrier data
 colnames(airlines_df) = c("AIRLINE_CODE", "AIRLINE")
 colnames(flights_processed_df)[5] = "AIRLINE_CODE"
 flights_processed_df = flights_processed_df %>%
-  left_join(airlines_df, by = "AIRLINE_CODE", keep = NULL) %>%
+  inner_join(airlines_df, by = "AIRLINE_CODE", keep = NULL) %>%
   relocate("AIRLINE", .after = "AIRLINE_CODE")
 
 # combine airline code and flight number together
@@ -37,14 +38,14 @@ colnames(flights_processed_df)[10] = "DESTINATION_AIRPORT_CODE"
 # for origin airports
 colnames(airports_df)[1] = "ORIGIN_AIRPORT_CODE"
 flights_processed_df = flights_processed_df %>%
-  left_join(airports_df, by = "ORIGIN_AIRPORT_CODE", copy = FALSE, keep = NULL) %>%
+  inner_join(airports_df, by = "ORIGIN_AIRPORT_CODE", copy = FALSE, keep = NULL) %>%
   rename_with(~ paste0("ORIGIN_", .), colnames(airports_df)[2:7]) %>%
   relocate(paste0("ORIGIN_", colnames(airports_df)[2:7]), .after = "ORIGIN_AIRPORT_CODE")
   
 # for destination airports
 colnames(airports_df)[1] = "DESTINATION_AIRPORT_CODE"
 flights_processed_df = flights_processed_df %>%
-  left_join(airports_df, by = "DESTINATION_AIRPORT_CODE", copy = FALSE, keep = NULL) %>%
+  inner_join(airports_df, by = "DESTINATION_AIRPORT_CODE", copy = FALSE, keep = NULL) %>%
   rename_with(~ paste0("DESTINATION_", .), colnames(airports_df)[2:7]) %>%
   relocate(paste0("DESTINATION_", colnames(airports_df)[2:7]), .after = "DESTINATION_AIRPORT_CODE")
 
@@ -105,7 +106,16 @@ flights_processed_df = flights_processed_df %>%
   mutate(INDEX = row.names(flights_processed_df)) %>%
   relocate(INDEX, .before = "FLIGHT_DATETIME")
 
+# separate uncancelled and cancelled flights, not important at the moment but we will separate just in case
+flights_cancelled_df = flights_processed_df %>%
+  filter(CANCELLED == 1)
+
+flights_processed_df = flights_processed_df %>%
+  filter(CANCELLED == 0)
+
 # save whole data for exploratory analysis
+save(flights_cancelled_df, file = "output/flights_cancelled.RData")
+write.table(flights_cancelled_df, file = "output/flights_cancelled.csv", sep = ",", row.names = FALSE)
 save(flights_processed_df, file = "output/flights.RData")
 write.table(flights_processed_df, file = "output/flights.csv", sep = ",", row.names = FALSE)
 
