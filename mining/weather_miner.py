@@ -16,6 +16,7 @@ class WeatherMiner:
         # get airport data
         airports = airportsdata.load('IATA')  # use IATA identifier
         airport = airports[airport_code]
+        print(airport)
 
         response = requests.get(f"https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={airport['lat']}&lon={airport['lon']}&dt={timestamp}&appid={self.api_key}&units={self.units}")
         if response.status_code == 200:
