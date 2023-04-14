@@ -122,7 +122,7 @@ write.table(flights_processed_df, file = "output/flights.csv", sep = ",", row.na
 # create n sample subset from our original data
 # this will be used for gathering weather data and for building our model
 set.seed("991")
-n = 2000
+n = 1000
 
 # randomly sample 1000 delayed flights
 delayed_flights_subset_df = flights_processed_df %>%

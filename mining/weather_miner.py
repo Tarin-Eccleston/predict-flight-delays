@@ -10,22 +10,31 @@ class WeatherMiner:
         self.username = username
         self.api_key = api_key
         self.units = "metric"
-        self.weather_data = []
         
     def get_weather_event(self, airport_code, timestamp):
         # get airport data
         airports = airportsdata.load('IATA')  # use IATA identifier
         airport = airports[airport_code]
-        print(airport)
 
         response = requests.get(f"https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={airport['lat']}&lon={airport['lon']}&dt={timestamp}&appid={self.api_key}&units={self.units}")
         if response.status_code == 200:
-            print(response.json())
-            # weather_data = response.json()
-            # temperature = weather_data["hourly"][0]["temp"]
-            # humidity = weather_data["hourly"][0]["humidity"]
-            # wind_speed = weather_data["hourly"][0]["wind_speed"]
-            # print(f"Temperature: {temperature}°F, Humidity: {humidity}%, Wind Speed: {wind_speed} mph")
+            weather_row = response.json()
+
+            # gather only the weather data component of the dictionary
+            # weather_row = weather_row['data'][0]
+
+            weather_row_p = {
+                "temp": weather_row["data"][0].get("temp"),
+                "pressure": weather_row["data"][0].get("pressure"),
+                "humidity": weather_row["data"][0].get("humidity"),
+                "dew_point": weather_row["data"][0].get("dew_point"),
+                "clouds": weather_row["data"][0].get("clouds"),
+                "visibility": weather_row["data"][0].get("visibility"),
+                "wind_speed": weather_row["data"][0].get("wind_speed"),
+            }
+
+            return weather_row_p
         else:
             print("Error: Could not retrieve weather data")
+            return {}
 
