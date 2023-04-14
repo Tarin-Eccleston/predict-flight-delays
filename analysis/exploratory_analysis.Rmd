@@ -7,37 +7,28 @@ output:
 
 ## 1. Goal
 
-Flight delays are typically caused by weather conditions that disrupt airport operations and passenger travel plans. This project aims to gather historical flight and weather data to build models to predict if an upcoming flight will be delayed.
+Flight delays are sometimes caused by weather conditions that disrupt airport operations and passenger travel plans. This project aims to gather historical flight and weather data to build models to predict if an upcoming flight will be delayed.
 
 ## 2. Data Source
 
 I originally planned to collect flight data from either one of two APIs, FlightAware or FlightRadar24, however I found the API subscription for both these platforms to be expensive. I also planned to gather flight data for a random distribution of flights throughout the world, but decided to simplify my problem down to only domestic US flights. Firstly, the flight data will be more consistent and standardized as it is coming from a single country, with similar regulations and procedures. This makes it easier to analyze the data and develop accurate predictive models. Secondly, the domestic flight network in the US is extensive, with many major airports and airlines. This provides a large sample size for analysis and allows for the identification of patterns and trends in the data. Thirdly, focusing on domestic flights in the US eliminates the need to account for differences in international regulations, weather patterns, and other factors that can affect flight delays and cancellations. This simplifies the data exploration process and allows for more targeted analysis.
 
-I instead found a good source on Kaggle, where a user collected flight data for 5.8 million flights in 2015. I wasn't able to find a dataset with flight data from the most recent years (2020 onwards), therefore I wouldn't be able to capture trends in flight delays due to the COVID-19 pandemic. The source included four datasets; flights, airports, airlines and cancellation reason. I was able to gain important information to identify if a flight was delayed by weather or for other reasons, and departure location and time information to collect weather data.
+I instead found a good source on Kaggle, where a user collected flight data for 5.8 million flights in 2015. I wasn't able to find a dataset with flight data from the most recent years (2020 onwards), therefore I wouldn't be able to capture trends in flight delays during the COVID-19 pandemic. The source included four datasets; flights, airports, airlines and cancellation reason. I was able to gain important information to identify if a flight was delayed by weather or for other reasons, and departure location and time information to collect weather data.
 
-Weather data was collected from OpenWeather API. Weather data such as temperature, wind speed, precipitation, and visibility will be collected. For simplification, weather associated with the origin airport will only be extracted as it is assumed that the leading cause of weather flight delays is due to the immediate weather around the airport. After processing flight data, I created a random subset of 1000 weather delayed and 1000 non-weather delayed flights and exported that. I used a Python script to call the OpenWeather API for each flight, and return the associated weather data. The weather data is the ___ hr...
-
-```{r}
-
-```
+TODO:
+Weather data was collected using OpenWeather API. Weather data such as temperature, wind speed, precipitation, and visibility will be collected. For simplification, weather associated with the origin airport will only be extracted as it is assumed that the leading cause of weather flight delays is due to the immediate weather around the airport. After processing flight data, I created a random subset of 1000 weather delayed and 1000 non-weather delayed flights and exported that. I used a Python script to call the OpenWeather API for each flight, and return the associated weather data. The weather data is the ___ hr...
 
 ## 3. Data Processing
 
-Firstly, since we are trying to predict the delay in future flights based on weather data, I removed columns which don't appear of important to building our model and collecting data from the OpenWeather API. The flight delay is the difference in the scheduled time and time which the plane leaves the gate at the departure airport (departure time). This is usually caused by operational issues or weather delays. Therefore we can drop time information after the departure time such as taxi time, arrival time and flight time as these are not used in our investigation to predict flight delays. We also don't need information on whether the flight was diverted or not.
+Firstly, since we are trying to predict the delay in future flights based on weather data, I removed columns which are not important to building our model and collecting data from the OpenWeather API. I removed cancellation data as I believe it's not useful for my investigation since there are many other operational factors that are not provided by the data which could result in a cancellation over a delay. The flight delay is the difference between the scheduled time and the time which the plane leaves the gate at the departure airport (departure time). This is usually caused by operational issues or weather delays. Therefore, we can drop time information after the departure time, such as taxi time, arrival time, and flight time, as these are not used in our investigation to predict flight delays. We also don't need information on whether the flight was diverted or not.
 
-We have the flights, airlines, airport and cancellation reason dataframes. We will need to join all dataframes together to get relevant information about each flight. Inner join is used when you ______
-I inner joined airlines data by airline code to get the carrier names, which is useful as we would like to investigate the occurrences of delays between each carrier. Next I inner joined the IATA code for departure and arrival airports to get airport information such as name, and coordinates. The coordinates departure airport coordinates are especially useful when getting weather data from OpenWeather. I then did a left join with cancellation reason to replace the cancellation code with a descriptive reason why the flight was cancelled. This information isn't too helpful in our analysis so I did a left join.
+We have the flights, airlines, airport, and cancellation reason dataframes. We will need to join all dataframes together to get relevant information about each flight. I inner joined the airlines data by airline code to get the carrier names, which is useful as we would like to investigate the occurrences of delays between each carrier. Next, I inner joined the IATA code for departure and arrival airports to get airport information such as name and coordinates. The departure airport coordinates are especially useful when getting weather data from OpenWeather. Then, I did a left join with cancellation reason to replace the cancellation code with a descriptive reason why the flight was cancelled. This information isn't too helpful in our analysis, so I did a left join.
 
-I combined delay times for air system, security, airline, and late aircraft delay and created another column called "OTHER_DELAY" as these delay times are caused by operational issues. I kept the "WEATHER_DELAY" column as is. Combing the columns simplifies the problem for our investigation as we don't need to seperature delay types for reasons which aren't related to weather for this study. If a flight is delayed for more than 15 minutes in "OTHER_DELAY" and / or "WEATHER_DELAY" it is classified as being delayed for that particular reason. 
+I combined delay times for air system, security, airline, and late aircraft delay and created another column called "OTHER_DELAY" as these delay times are caused by operational issues. I kept the "WEATHER_DELAY" column as is. Combining the columns simplifies the problem for our investigation as we don't need to separate delay types for reasons which aren't related to weather for this study. If a flight is delayed for more than 15 minutes in "OTHER_DELAY" and/or "WEATHER_DELAY", it is classified as being delayed for that particular reason. If flights are delayed for more than 15 minutes for a particular reason, then we can conclude that it was delayed for that reason.
 
-The original dataframe has flight dates where the day, month and year is seperatured by columns. I combined them and created a datetime object as this can be better used in analysis. 
-- Convert days of week to strings
-- Converting time format
-- Datetime objects
+The original dataframe has flight dates where the day, month, and year are separated across columns. I combined these together into a datetime object. I reformatted military text time to be in datetime format for better analysis.
 
-I created two subsets. One for cancellations as 
-- Subset for cancellations
-- Creating subset for weather data / analysis
+Since the amount of free weather data I could gather from OpenWeather is limited, I created a random subset of 2000 non-delayed and 2000 delayed flights. Having an equal split allows for less bias when analyzing the difference between weather conditions for non-delayed and delayed flights and when building our predictive model.
 
 ## 4. Data Exploration
 
@@ -54,8 +45,6 @@ library(skimr)
 load("../output/flights.RData")
 airports_df = read.csv("../data/airports.csv")
 ```
-
-Summary of our data
 
 ```{r}
 skim(flights_processed_df)
@@ -108,9 +97,9 @@ flight_plot = airport_plot +
 flight_plot
 ```
 
-It is important to have uniformly distributed data across all days in 2015 in order to capture seasonal, weather and holiday patterns that might contribute to flight delays. There is a section of data missing from October 15th to November 15th. After investigating the pre-processing phase, it appears that observations between these two times have been originally included however each observation has numeric airport codes instead of IATA codes. These observations are removed after inner joining with the airports dataframe as we are joining by IATA code to get airport names and coordinates. Since we cannot associate the flights with airports between October 15th to November 15th, we cannot gather the weather data to build our model.
+It is important to have uniformly distributed data across all days in 2015 in order to capture seasonal, weather and holiday patterns that might contribute to flight delays. There is a section of data missing from October 2015. After investigating the pre-processing phase, it appears that observations between these two times have been originally included however each observation has numeric airport codes instead of IATA codes. These observations are removed after inner joining with the airports dataframe as we are joining by IATA code to get airport names and coordinates. Since we cannot associate the flights with airports between October 2015, we cannot gather the weather data to build our model.
 
-Extreme weather events such as hurricanes, tropical storms, and winter storms can occur during October 15th and November 15th. It is important to note this as it could affect our data analysis and model by causing some bias. However I believe this shouldn't be a problem as we have plenty of data from adjacent months to capture these extreme weather events.
+Extreme weather events such as hurricanes, tropical storms, and winter storms can occur during October 2015. It is important to note this as it could affect our data analysis and model by causing some bias. However I believe this shouldn't be a problem as we have plenty of data from adjacent months to capture these extreme weather events.
 
 ```{r}
 flights_processed_df$FLIGHT_DATETIME <- as.Date(flights_processed_df$FLIGHT_DATETIME)
@@ -121,65 +110,133 @@ ggplot(flights_processed_df, aes(x = FLIGHT_DATETIME)) +
   labs(x = "Date", y = "Number of flights", title = "Distribution of flights per day in 2015")
 ```
 
-- 4.2 Question 2: Are there any seasonal or time-of-day patterns in weather-related flight delays? For example, are flights more likely to be delayed during thunderstorms or during peak travel times?
+- 4.2 Question 2: Are there any seasonal, day or time-of-day patterns in flight delays?
 
-I intend to explore the relationship between geographic location and flight delays. Are some airports or regions more likely to have flight delays? I took the average of the delay times for all delays, other delays and weather delays and compared them.
+I intend to explore the relationship between time and the chance of delays, for each month, day of the week, and hour of day. The first step involves grouping all flights into each respective category. Then, I calculated the percentage of delays caused by other factors or weather for all flights in each of these categories. The plots below show the percentage of other delays and weather delays for each category.
 
+The first plot shows the seasonal changes in flight delay percentages throughout 2015. Note that flights in October are not included in my investigation. There are two peaks in other flight delays: for December-February, marking the Christmas holiday period, and June-July, the months when people go on summer vacation. This is expected, as there could be issues such as congested runways and airspace, and staff shortage, which would result in operational flight delays. Weather delay percentages for each month appear to correlate with operational delays. A conclusion we can draw from this is that these two periods have greater extreme weather occurrences.
 
+The second plot shows the changes in flight delays by day of the week. As expected, busy days such as Monday and Thursday have a greater percentage of operational delays compared to other days of the week. We would expect that flights have a uniform percentage chance of delays due to weather for each day of the week, but there seems to be a slight correlation between the percentage delay for operational and weather causes.
 
-```{r}
-flights_processed_2_df = flights_processed_df
+The third plot shows the hourly changes in flight delay percentages. It appears that flights later in the day experience a higher chance of getting delayed, as there is a higher likelihood of delays building up due to earlier flight delays and disruptions, such as bad weather, late aircraft arrival, or air traffic congestion. The same trend occurs for weather delay percentages, as it is well-researched that flights later in the day may experience worse weather due to a number of factors. One factor is that thunderstorms and other weather events tend to occur more frequently in the afternoon and evening hours, especially during the summer months. Additionally, as the day progresses, the heat of the sun can cause instability in the atmosphere, leading to the formation of thunderstorms and other types of severe weather.
 
-flight_airport_delays_df = flights_processed_2_df %>% 
-  group_by(ORIGIN_AIRPORT) %>% 
-  summarize(TOTAL_FLIGHTS = n(),
-            AVG_DELAY = mean(DEPARTURE_DELAY, na.rm = TRUE)) %>%
-  filter(TOTAL_FLIGHTS > 100)
+Flights can experience both weather and operational delays. The correlation between operational and weather delay percentages for all categories can also be due to late aircraft arrival caused by regional weather disruptions. Although it is useful to understand the relationship between time and the percentage of flight delays due to weather, this could be better explained by weather conditions, which are a function of seasonality, time of day, and geography, among other factors.
 
-# find the top 10 most delayed airports
-top_airports_df = flight_airport_delays_df %>%
-  arrange(desc(AVG_DELAY)) %>%
-  head(10)
- 
-ggplot(top_airports_df, aes(x = reorder(ORIGIN_AIRPORT, AVG_DELAY), y = AVG_DELAY)) +
-  geom_bar(stat = "identity") +
-  ggtitle("Top 10 Most Delayed Airports") +
-  xlab("Destination Airport") + ylab("Mean Arrival Delay (minutes)") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
+```{r} 
+# date dataframe
+flights_delay_by_date_df = flights_processed_df %>%
+  group_by(FLIGHT_DATETIME) %>%
+  summarize(TOTAL_FLIGHTS = n(), 
+            PERCENT_OTHER_DELAY = mean(IS_OTHER_DELAY, na.rm = TRUE) * 100, 
+            PERCENT_WEATHER_DELAY = mean(IS_WEATHER_DELAY, na.rm = TRUE) * 100, 
+            .groups = 'drop')
 
-```{r}
-flights_processed_2_df = flights_processed_df
+flights_delay_by_date_df$FLIGHT_DATETIME <- as.Date(flights_delay_by_date_df$FLIGHT_DATETIME)
 
-flight_airport_delays_df = flights_processed_2_df %>% 
-  group_by(ORIGIN_AIRPORT) %>% 
-  summarize(AVG_OTHER_DELAY = mean(OTHER_DELAY, na.rm = TRUE))
-  summarize()
+# month dataframe
+flights_delay_by_month_df = flights_processed_df %>%
+  mutate(MONTH = month(SCHEDULED_DEPARTURE_DATETIME)) %>%
+  group_by(MONTH) %>%
+  summarize(TOTAL_FLIGHTS = n(), 
+            PERCENT_OTHER_DELAY = mean(IS_OTHER_DELAY, na.rm = TRUE) * 100, 
+            PERCENT_WEATHER_DELAY = mean(IS_WEATHER_DELAY, na.rm = TRUE) * 100, 
+            .groups = 'drop')
 
-# find the top 10 most delayed airports
-top_airports_df = flight_airport_delays_df %>%
-  arrange(desc(AVG_OTHER_DELAY)) %>%
-  head(10)
- 
-ggplot(top_airports_df, aes(x = reorder(ORIGIN_AIRPORT, AVG_OTHER_DELAY), y = AVG_OTHER_DELAY)) +
-  geom_bar(stat = "identity") +
-  ggtitle("Top 10 Most Delayed Airports") +
-  xlab("Destination Airport") + ylab("Mean Arrival Delay (minutes)") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+flights_delay_by_month_df = na.omit(flights_delay_by_month_df) 
+
+% create dummy row for october
+new_row = data.frame(MONTH = 10, 
+                      TOTAL_FLIGHTS = 0, 
+                      PERCENT_OTHER_DELAY = 0, 
+                      PERCENT_WEATHER_DELAY = 0)
+flights_delay_by_month_df = flights_delay_by_month_df %>%
+  add_row(new_row, .after = 9)
+
+# day dataframe
+flights_delay_by_day_df = flights_processed_df %>%
+  group_by(DAY_OF_WEEK) %>%
+  summarize(TOTAL_FLIGHTS = n(), 
+            PERCENT_OTHER_DELAY = mean(IS_OTHER_DELAY, na.rm = TRUE) * 100, 
+            PERCENT_WEATHER_DELAY = mean(IS_WEATHER_DELAY, na.rm = TRUE) * 100, 
+            .groups = 'drop')
+
+# define the order of the days
+day_order = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+flights_delay_by_day_df$DAY_OF_WEEK = factor(flights_delay_by_day_df$DAY_OF_WEEK, levels = day_order, ordered = TRUE)
+
+# hour dataframe
+flights_delay_by_hour_df = flights_processed_df %>%
+  mutate(HOUR = hour(SCHEDULED_DEPARTURE_DATETIME)) %>%
+  group_by(HOUR) %>%
+  summarize(TOTAL_FLIGHTS = n(), 
+            PERCENT_OTHER_DELAY = mean(IS_OTHER_DELAY, na.rm = TRUE) * 100, 
+            PERCENT_WEATHER_DELAY = mean(IS_WEATHER_DELAY, na.rm = TRUE) * 100, 
+            .groups = 'drop')
+
+flights_delay_by_hour_df = na.omit(flights_delay_by_hour_df) 
+
+# combined plots
+ggplot(flights_delay_by_month_df, aes(x = MONTH)) +
+  geom_area(aes(y = PERCENT_OTHER_DELAY, fill = "Other Delay"), alpha = 0.5) +
+  geom_area(aes(y = PERCENT_WEATHER_DELAY, fill = "Weather Delay"), alpha = 0.5) +
+  geom_smooth(aes(y = PERCENT_OTHER_DELAY, color = "Other Delay"), method = "loess", se = FALSE, span = 0.25) +
+  geom_smooth(aes(y = PERCENT_WEATHER_DELAY, color = "Weather Delay"), method = "loess", se = FALSE, span = 0.25) +
+  scale_x_continuous(breaks = seq(0, 12, 1)) +
+  scale_fill_manual(values = c("grey", "red"), labels = c("Other Delay", "Weather Delay")) +
+  scale_color_manual(values = c("black", "black"), labels = c("Other Delay", "Weather Delay")) +
+  labs(x = "Months of 2015", y = "Percentage of Delays (%)", fill = "", color = "") +
+  ggtitle("Percentage of Other and Weather Delays by Months of 2015")
+
+ggplot(flights_delay_by_day_df, aes(x = DAY_OF_WEEK)) +
+  geom_bar(aes(y = PERCENT_OTHER_DELAY, fill = "Other Delay"), stat = "identity") +
+  geom_bar(aes(y = PERCENT_WEATHER_DELAY, fill = "Weather Delay"), stat = "identity") +
+  scale_fill_manual(values = c("Other Delay" = "grey", "Weather Delay" = "red")) +
+  labs(x = "Day of Weeks in 2015", y = "Percentage of Delays (%)", fill = "") +
+  ggtitle("Percentage of Other and Weather Delays by Day of Weeks in 2015") +
+  theme(legend.position = "bottom") +
+  geom_text(aes(y = PERCENT_OTHER_DELAY, label = paste0(round(PERCENT_OTHER_DELAY, 1), "%")), vjust = -0.5) +
+  geom_text(aes(y = PERCENT_WEATHER_DELAY, label = paste0(round(PERCENT_WEATHER_DELAY, 1), "%")), vjust = -0.5)
+
+ggplot(flights_delay_by_hour_df, aes(x = HOUR)) +
+  geom_area(aes(y = PERCENT_OTHER_DELAY, fill = "Other Delay"), alpha = 0.5) +
+  geom_area(aes(y = PERCENT_WEATHER_DELAY, fill = "Weather Delay"), alpha = 0.5) +
+  geom_smooth(aes(y = PERCENT_OTHER_DELAY, color = "Other Delay"), method = "loess", se = FALSE, span = 0.25) +
+  geom_smooth(aes(y = PERCENT_WEATHER_DELAY, color = "Weather Delay"), method = "loess", se = FALSE, span = 0.25) +
+  labs(x = "Hour of Days in 2015", y = "Percentage of Delays (%)", fill = "", color = "") +
+  ggtitle("Percentage of Other and Weather Delays by Hour of Days in 2015") +
+  scale_x_continuous(breaks = seq(0, 23, 1), labels = paste0(seq(0, 23, 1), ":00")) +
+  scale_fill_manual(name = "Delay Type:", values = c("Other Delay" = "grey", "Weather Delay" = "red")) +
+  scale_color_manual(name = "Delay Type:", values = c("Other Delay" = "black", "Weather Delay" = "black")) +
+  theme(legend.position = "bottom", axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 - 4.3 Question 3: Can we distinguish between weather delayed and non-weather delayed flights based on weather data?
 
-The original question was to investigate which weather variables influence the likelihood of flight delays the most. However I realized that this is more of a modelling problem. Instead I would like to compare ________ between weather delayed and non-weather delayed groups to see where we can distinguish between classes, and infer from there which weather factors are most important.
+The original question was to investigate which weather variables influence the likelihood of flight delays the most. However I realized that this is more of a modelling problem. Instead I would like to compare ________ between weather delayed and non-delayed groups to see where we can distinguish between them, and infer from there which weather factors are most important.
 
+```{r}
+
+```
+
+
+
+
+It appears that there is no difference between ____ for ____ and...
 
 
 ## 5. Analytical Plan
 
 
+
 ## 6. Appendix
 
-## Data cleaning
+### Data cleaning
+
+```{r}
+
+```
+
+### Visualisation
 
 ```{r}
 
