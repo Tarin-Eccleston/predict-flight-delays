@@ -1,6 +1,8 @@
 data/flights.csv
 output/flights.csv
 output/flights_cancelled.csv
+*.pdf
+*.html
 *.DS_Store
 *.RData
 *.Rhistory
