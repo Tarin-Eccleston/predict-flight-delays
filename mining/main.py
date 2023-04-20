@@ -10,8 +10,6 @@ def main():
     api_key = os.getenv('API_KEY')
     weather_miner = WeatherMiner(api_username, api_key)
     
-
-
     flights_df = pd.read_csv('output/flights_subset.csv')
     weather_data = pd.DataFrame()
 

@@ -247,7 +247,7 @@ flights_weather_df = flights_subset_df %>%
 flights_weather_df = flights_weather_df[complete.cases(flights_weather_df$temp), ]  
 
 temp_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = temp, fill = factor(IS_WEATHER_DELAY))) +
-  geom_boxplot(width = 0.2, height = 0.2) + 
+  geom_violin(width = 0.2, height = 0.2) + 
   # ggtitle("Temperature comparison between Weather Delay and Non-Delayed Flights") +
   labs(x = "", y = "Temperature (C)", fill = "IS_WEATHER_DELAY") +
   scale_fill_manual(values = c("gray", "red"), guide = "none") +
@@ -255,7 +255,7 @@ temp_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = tem
   theme_classic()
 
 pressure_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = pressure, fill = factor(IS_WEATHER_DELAY))) +
-  geom_boxplot(width = 0.2, height = 0.2) + 
+  geom_violin(width = 0.2, height = 0.2) + 
   # ggtitle("Pressure comparison between Weather Delay and Non-Delayed Flights") +
   labs(x = "", y = "Pressure (Millibars)", fill = "IS_WEATHER_DELAY") +
   scale_fill_manual(values = c("gray", "red"), guide = "none") +
@@ -263,23 +263,24 @@ pressure_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y =
   theme_classic()
 
 humidity_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = humidity, fill = factor(IS_WEATHER_DELAY))) +
-  geom_boxplot(width = 0.2, height = 0.2) + 
+  geom_violin(width = 0.2, height = 0.2) + 
   # ggtitle("Humidity comparison between Weather Delay and Non-Delayed Flights") +
   labs(x = "", y = "Humidity (%)", fill = "IS_WEATHER_DELAY") +
   scale_fill_manual(values = c("gray", "red"), guide = "none") +
   scale_x_discrete(labels = c("Not Weather Delayed", "Weather Delayed")) +
   theme_classic()
 
-dew_point_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = dew_point, fill = factor(IS_WEATHER_DELAY))) +
-  geom_boxplot(width = 0.2, height = 0.2) + 
-  # ggtitle("Dew Point comparison between Weather Delay and Non-Delayed Flights") +
-  labs(x = "", y = "Dew Point (C)", fill = "IS_WEATHER_DELAY") +
-  scale_fill_manual(values = c("gray", "red"), guide = "none") +
-  scale_x_discrete(labels = c("Not Weather Delayed", "Weather Delayed")) +
-  theme_classic()
+# we don't need this in the calculation as dew_point is a product of temp and humidity
+#dew_point_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = dew_point, fill = factor(IS_WEATHER_DELAY))) +
+#  geom_violin(width = 0.2, height = 0.2) + 
+#  # ggtitle("Dew Point comparison between Weather Delay and Non-Delayed Flights") +
+#  labs(x = "", y = "Dew Point (C)", fill = "IS_WEATHER_DELAY") +
+#  scale_fill_manual(values = c("gray", "red"), guide = "none") +
+#  scale_x_discrete(labels = c("Not Weather Delayed", "Weather Delayed")) +
+#  theme_classic()
 
 clouds_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = clouds, fill = factor(IS_WEATHER_DELAY))) +
-  geom_boxplot(width = 0.2, height = 0.2) + 
+  geom_violin(width = 0.2, height = 0.2) + 
   # ggtitle("Cloud % Cover comparison between Weather Delay and Non-Delayed Flights") +
   labs(x = "", y = "Cloud Percentage Cover (%)", fill = "IS_WEATHER_DELAY") +
   scale_fill_manual(values = c("gray", "red"), guide = "none") +
@@ -287,12 +288,28 @@ clouds_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = c
   theme_classic()
 
 wind_speed_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = wind_speed, fill = factor(IS_WEATHER_DELAY))) +
-  geom_boxplot(width = 0.2, height = 0.2) + 
+  geom_violin(width = 0.2, height = 0.2) + 
   # ggtitle("Wind Speed comparison between Weather Delay and Non-Delayed Flights") +
   labs(x = "", y = "Wind Speed (m/s)") +
   scale_fill_manual(values = c("gray", "red"), guide = "none") +
   scale_x_discrete(labels = c("Not Weather Delayed", "Weather Delayed")) +
   theme_classic()
+
+ggplot(flights_weather_df, aes(x = clouds, y = temp, color = factor(IS_WEATHER_DELAY))) +
+  geom_point() +
+  scale_color_manual(values = c("black", "red"), 
+                     labels = c("Other Delay", "Weather Delayed")) +
+  labs(title = "Comparison of Temperature and Pressure Between Delay Types",
+       x = "dew_point", y = "temp")
+
+# significant plots
+# clouds vs temp: middle band of temp at high cloud coverage where other delays persist
+# temp: multimodal, but could just use the plot above
+# cloud cover: greater spread higher up. expect multimodal is it's not continuous
+# pressure: slightly lower for weather delayed flights
+# wind speed, basically identical
+
+# todo
 
 temp_plot
 pressure_plot
