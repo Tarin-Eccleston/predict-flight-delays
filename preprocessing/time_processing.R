@@ -3,7 +3,7 @@ library(tidyverse)
 library(ggplot2)
 
 # read data
-load("data/output/flights_joined.RData")
+load("data/output/cleaning/flights_joined.RData")
 
 # if flight is delayed for more than 15 minutes due to weather or any other factors
 # we don't need to separate other delay types for this study
