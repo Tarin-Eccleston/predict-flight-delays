@@ -19,7 +19,7 @@ class WeatherMiner:
         response = requests.get(f"https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={airport['lat']}&lon={airport['lon']}&dt={timestamp}&appid={self.api_key}&units={self.units}")
         if response.status_code == 200:
             weather_event = response.json()
-
+            print(weather_event)
             # gather only the weather data component of the dictionary
             # weather_row = weather_row['data'][0]
 
@@ -31,12 +31,12 @@ class WeatherMiner:
                 "clouds": weather_event["data"][0].get("clouds"),
                 "visibility": weather_event["data"][0].get("visibility"),
                 "wind_speed": weather_event["data"][0].get("wind_speed"),
-                "rainfall_1hr": weather_event["data"][0].get("rain", {}).get("1h"),
-                "rainfall_3hr": weather_event["data"][0].get("rain", {}).get("3h"),
+                "rainfall_1hr": weather_event["data"][0].get("rain", {}).get("1h"),            
+                "weather_desc": [desc.get("description") for desc in weather_event["data"][0].get("weather", [])],
             }
-
             return weather_event
         else:
             print("Error: Could not retrieve weather data")
             return {}
+    
 

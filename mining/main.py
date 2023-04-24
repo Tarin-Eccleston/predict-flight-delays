@@ -10,7 +10,7 @@ def main():
     api_key = os.getenv('API_KEY')
     weather_miner = WeatherMiner(api_username, api_key)
     
-    flights_df = pd.read_csv('output/flights_subset.csv')
+    flights_df = pd.read_csv('data/output/cleaning/flights_subset.csv')
     weather_data = pd.DataFrame()
 
     # get timestamp for scheduled departure time
@@ -18,7 +18,7 @@ def main():
     flights_df['SCHEDULED_DEPARTURE_TIMESTAMP'] = flights_df['SCHEDULED_DEPARTURE_DATETIME'].apply(lambda x: x.timestamp()).round(0).astype(int)
     
     # gather weather data as rows and continuously append
-    for i in range(0,len(flights_df)):
+    for i in range(0,10):
         airport_code = flights_df.loc[i,'ORIGIN_AIRPORT_CODE']
         timestamp = flights_df.loc[i,'SCHEDULED_DEPARTURE_TIMESTAMP']
 
@@ -30,7 +30,7 @@ def main():
         print(weather_event)
         weather_data = pd.concat([weather_data, weather_event], ignore_index=True)
 
-    weather_data.to_csv('output/weather_data.csv', index=False)
+    weather_data.to_csv('data/output/weather/weather_data.csv', index=False)
 
 if __name__ == "__main__": {
     main()
