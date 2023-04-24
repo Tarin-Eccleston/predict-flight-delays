@@ -32,6 +32,7 @@ class WeatherMiner:
                 "visibility": weather_event["data"][0].get("visibility"),
                 "wind_speed": weather_event["data"][0].get("wind_speed"),
                 "rainfall_1hr": weather_event["data"][0].get("rain", {}).get("1h"),
+                "rainfall_3hr": weather_event["data"][0].get("rain", {}).get("3h"),
             }
 
             return weather_event
