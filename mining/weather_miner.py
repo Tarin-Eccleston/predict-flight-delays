@@ -11,15 +11,10 @@ class WeatherMiner:
         self.api_key = api_key
         self.units = "metric"
         
-    def get_weather_event(self, airport_code, timestamp):
-        # get airport data
-        airports = airportsdata.load('IATA')  # use IATA identifier
-        airport = airports[airport_code]
-
-        response = requests.get(f"https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={airport['lat']}&lon={airport['lon']}&dt={timestamp}&appid={self.api_key}&units={self.units}")
+    def get_weather_event(self, airport_coord_lat, airport_coord_lon, timestamp):
+        response = requests.get(f"https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={airport_coord_lat}&lon={airport_coord_lon}&dt={timestamp}&appid={self.api_key}&units={self.units}")
         if response.status_code == 200:
             weather_event_raw = response.json()
-            # print(weather_event)
 
             weather_event = {
                 "temp": weather_event_raw["data"][0].get("temp"),
@@ -49,7 +44,7 @@ class WeatherMiner:
                 "clear": "None",
             }
 
-            # Check for each type of weather event and add the description to the corresponding column
+            # check for each type of weather event and add the description to the corresponding column
             for weather in weather_event_raw["data"][0].get("weather", []):
                 if "Rain" in weather["main"]:
                     weather_event["rain"] = weather["description"]
