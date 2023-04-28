@@ -54,3 +54,8 @@ flights_subset_df <- flights_subset_df[sample(nrow(flights_subset_df)), ]
 save(flights_subset_df, file = "data/output/cleaning/flights_subset.RData")
 write.table(flights_subset_df, file = "data/output/cleaning/flights_subset.csv", sep = ",", row.names = FALSE)
 
+weather = read.csv("data/output/weather/weather_data.csv")
+weather$INDEX = as.numeric(weather$INDEX)
+
+weather_flights_joined = flights_processed_df %>%
+  inner_join(weather, by = "INDEX", keep = NULL)

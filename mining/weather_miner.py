@@ -25,13 +25,13 @@ class WeatherMiner:
                 "visibility": weather_event_raw["data"][0].get("visibility"),
                 "wind_speed": weather_event_raw["data"][0].get("wind_speed"),
                 "rainfall_1hr": weather_event_raw["data"][0].get("rain", {}).get("1h"),
+                "rainfall_3hr": weather_event_raw["data"][0].get("rain", {}).get("3h"),
                 "snowfall_1hr": weather_event_raw["data"][0].get("snow", {}).get("1h"),  
-                # precipitation events
+                "snowfall_3hr": weather_event_raw["data"][0].get("snow", {}).get("3h"),  
                 "thunderstorm": "None",  
                 "drizzle": "None",          
                 "rain": "None",
                 "snow": "None",
-                # atmospheric conditions
                 "mist": "None",
                 "smoke": "None",
                 "haze": "None",
@@ -41,7 +41,6 @@ class WeatherMiner:
                 "ash": "None",
                 "squall": "None",
                 "tornado": "None",
-                "clear": "None",
             }
 
             # check for each type of weather event and add the description to the corresponding column
@@ -72,8 +71,6 @@ class WeatherMiner:
                     weather_event["squall"] = weather["description"]
                 elif "Tornado" in weather["main"]:
                     weather_event["tornado"] = weather["description"]
-                elif "Clear" in weather["main"]:
-                    weather_event["clear"] = weather["description"]
 
             return weather_event
         else:
