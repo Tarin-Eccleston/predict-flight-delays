@@ -33,7 +33,9 @@ def main():
         if (~os.path.isfile('data/output/weather/weather_data_samples_' + str(sample_range_lower) + "-" + str(sample_range_upper) + '.csv')):
             # gather weather data as rows and continuously append
             for call_number in range(sample_range_lower, sample_range_upper + 1):
-                if (call_number > len(flights_df)):
+                if (call_number > len(flights_df)-1):
+                    # smaller batch if last one is less than specified batch size
+                    weather_events.to_csv('data/output/weather/weather_data_samples_' + str(sample_range_lower) + "-" + str(call_number) + '.csv', index=False)
                     break
 
                 airport_coord_lat = flights_df.loc[call_number,'ORIGIN_LATITUDE']
