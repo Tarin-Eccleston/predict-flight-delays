@@ -29,8 +29,8 @@ library(ggmap)
 library(cowplot)
 library(maps)
 
-load("../output/flights.RData")
-airports_df = read.csv("../data/airports.csv")
+load("../data/intermediate/cleaning/flights_time_cleaned.RData")
+airports_df = read.csv("../data/input/airports.csv")
 ```
 
 Firstly, since we are trying to predict the delay in future flights based on weather data, I removed columns which are not important to building our model and collecting data from the OpenWeather API. I removed cancellation data as I believe it's not useful for my investigation since there are many other operational factors that are not provided by the data which could result in a cancellation over a delay. Flight delay is the difference between scheduled and actual departure time, usually due to operational or weather issues. Therefore, I dropped time info after departure time, such as taxi time, arrival time, and flight time, and info on whether the flight was diverted.
@@ -48,23 +48,6 @@ I combined delay times for air system, security, airline, and late aircraft dela
 The original dataframe has flight dates where the day, month, and year are separated across columns. I combined these together into a datetime object. I reformatted military text time to be in datetime format for better analysis.
 
 Since the amount of free weather data I could gather from OpenWeather is limited, I created a random subset of 500 non-delayed and 500 delayed flights. Having an equal split allows for less bias when analyzing the difference between weather conditions for non-delayed and delayed flights and when building our predictive model.
-
-```{r sampling, eval=FALSE, echo=TRUE}
-set.seed("991")
-n = 1000
-
-delayed_flights_subset_df = flights_processed_df %>%
-  filter(IS_WEATHER_DELAY == TRUE) %>%
-  sample_n(n/2)
-on_time_flights_subset_df = flights_processed_df %>%
-  filter(IS_WEATHER_DELAY == FALSE) %>%
-  sample_n(n/2)
-
-flights_subset_df = rbind(delayed_flights_subset_df, on_time_flights_subset_df)
-flights_subset_df <- flights_subset_df[sample(nrow(flights_subset_df)), ]
-
-write.table(flights_subset_df, file = "output/flights_subset.csv", sep = ",", row.names = FALSE)
-```
 
 ## 4. Data Exploration
 
@@ -120,10 +103,12 @@ Extreme weather events such as hurricanes, tropical storms, and winter storms ca
 ```{r flight_numbers, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center"}
 flights_processed_df$FLIGHT_DATETIME <- as.Date(flights_processed_df$FLIGHT_DATETIME)
 
-ggplot(flights_processed_df, aes(x = FLIGHT_DATETIME)) +
+flights_vs_month = ggplot(flights_processed_df, aes(x = FLIGHT_DATETIME)) +
   geom_histogram(binwidth = 1, color = "black", fill = "white") +
   scale_x_date(date_breaks = "1 month", date_labels = "%b %y") +
   labs(x = "Date", y = "Number of flights", title = "Distribution of flights per day in 2015")
+
+flights_vs_month
 ```
 
 ### 4.2 Question 2: Are there any seasonal, day or time-of-day patterns in flight delays?
@@ -235,16 +220,29 @@ Gale force winds are also a common cause of flight delays, as they can make take
 I think that the most significant variables for predicting flight delays appear to be those where the medians are noticeably different between groups, such as humidity, dew point, wind speed, and pressure. However, there is still significant overlap between the two groups. A possible solution would be to collect weather condition data from OpenWeather, such as "rain," "thunderstorms," or "snow," and compare the presence of these conditions between weather-delayed and other flights.
 
 ```{r weather-data, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center"}
-weather_df = read.csv("../output/weather_data.csv")
-flights_subset_df = read.csv("../output/flights_subset.csv")
+weather_data_files = list.files("../data/intermediate/weather", pattern = NULL, full.names = TRUE)
+weather_df = data.frame()
+
+# combine all .csv files
+for (file in weather_data_files) {
+  temp_data = read.csv(file, header = TRUE)
+  weather_df = rbind(weather_df, temp_data)
+}
+
+# remove observations where the weather data is missing at random due to API call
+weather_df = weather_df[complete.cases(weather_df$temp), ] 
+weather_df$INDEX = as.numeric(weather_df$INDEX)
+flights_processed_df$INDEX = as.numeric(flights_processed_df$INDEX)
 
 # link up flights and associated weather data
-flights_weather_df = flights_subset_df %>%
+flights_weather_df = flights_processed_df %>%
   inner_join(weather_df, by = "INDEX", keep = NULL) %>%
-  mutate(rainfall_1hr = replace_na(rainfall_1hr, 0))
-
-# remove observations with no weather data
-flights_weather_df = flights_weather_df[complete.cases(flights_weather_df$temp), ]  
+  mutate(rainfall_1hr = replace_na(rainfall_1hr, 0)) %>%
+  mutate(rainfall_3hr = replace_na(rainfall_3hr, 0)) %>%
+  mutate(snowfall_1hr = replace_na(snowfall_1hr, 0)) %>%
+  mutate(snowfall_3hr = replace_na(snowfall_3hr, 0)) %>%
+  select(-CANCELLED) %>%
+  select(-CANCELLATION_DESCRIPTION)
 
 temp_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = temp, fill = factor(IS_WEATHER_DELAY))) +
   geom_violin(width = 0.2, height = 0.2) + 
@@ -270,15 +268,6 @@ humidity_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y =
   scale_x_discrete(labels = c("Not Weather Delayed", "Weather Delayed")) +
   theme_classic()
 
-# we don't need this in the calculation as dew_point is a product of temp and humidity
-#dew_point_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = dew_point, fill = factor(IS_WEATHER_DELAY))) +
-#  geom_violin(width = 0.2, height = 0.2) + 
-#  # ggtitle("Dew Point comparison between Weather Delay and Non-Delayed Flights") +
-#  labs(x = "", y = "Dew Point (C)", fill = "IS_WEATHER_DELAY") +
-#  scale_fill_manual(values = c("gray", "red"), guide = "none") +
-#  scale_x_discrete(labels = c("Not Weather Delayed", "Weather Delayed")) +
-#  theme_classic()
-
 clouds_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = clouds, fill = factor(IS_WEATHER_DELAY))) +
   geom_violin(width = 0.2, height = 0.2) + 
   # ggtitle("Cloud % Cover comparison between Weather Delay and Non-Delayed Flights") +
@@ -295,28 +284,50 @@ wind_speed_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y
   scale_x_discrete(labels = c("Not Weather Delayed", "Weather Delayed")) +
   theme_classic()
 
-ggplot(flights_weather_df, aes(x = clouds, y = temp, color = factor(IS_WEATHER_DELAY))) +
+ggplot(flights_weather_df, aes(x = humidity, y = wind_speed, color = factor(IS_WEATHER_DELAY))) +
   geom_point() +
   scale_color_manual(values = c("black", "red"), 
                      labels = c("Other Delay", "Weather Delayed")) +
   labs(title = "Comparison of Temperature and Pressure Between Delay Types",
        x = "dew_point", y = "temp")
 
-# significant plots
-# clouds vs temp: middle band of temp at high cloud coverage where other delays persist
-# temp: multimodal, but could just use the plot above
-# cloud cover: greater spread higher up. expect multimodal is it's not continuous
-# pressure: slightly lower for weather delayed flights
-# wind speed, basically identical
+rainfall_1hr = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = snowfall_1hr, fill = factor(IS_WEATHER_DELAY))) +
+  geom_violin(width = 0.2, height = 0.2) + 
+  # ggtitle("Wind Speed comparison between Weather Delay and Non-Delayed Flights") +
+  labs(x = "", y = "Wind Speed (m/s)") +
+  scale_fill_manual(values = c("gray", "red"), guide = "none") +
+  scale_x_discrete(labels = c("Not Weather Delayed", "Weather Delayed")) +
+  theme_classic()
 
-# todo
+# significant plots
+# temp: multimodal, but could just use the plot above 
+# cloud cover: greater spread higher up. expect multimodal is it's not continuous
+# pressure: slightly lower for weather delayed flights SHOW
+# wind speed, quite similar
+# humidity vs wind speed: When high windspeed and high humidity occur together, it can create conditions that are favorable for the formation of severe weather systems SHOW
 
 temp_plot
 pressure_plot
 humidity_plot
-dew_point_plot
 clouds_plot
 wind_speed_plot
+rainfall_1hr
+
+glimpse(flights_weather_df)
+
+ggplot(flights_weather_df, aes(x = rain, y = IS_WEATHER_DELAY, color = rain)) +
+  geom_jitter(width = 0.2, height = 0.1) +
+  labs(x = "Types of Rain", y = "Weather Delayed", title = "Rain vs Weather Delay")
+
+ggplot(flights_weather_df, aes(x = rain, y = IS_WEATHER_DELAY, color = rain)) +
+  geom_jitter(width = 0.2, height = 0.1) +
+  labs(x = "Types of Rain", y = "Weather Delayed", title = "Rain vs Weather Delay")
+
+ggplot(flights_weather_df, aes(x = snow, y = IS_WEATHER_DELAY, color = snow)) +
+  geom_jitter(width = 0.2, height = 0.1, size = 3, alpha = 0.5) +
+  labs(x = "Types of Rain", y = "Weather Delayed", title = "Rain vs Weather Delay")
+
+write.table(flights_weather_df, file = "../data/intermediate/modelling/flights_weather.csv", sep = ",", row.names = FALSE)
 ```
 
 ## 5. Analytical Plan
