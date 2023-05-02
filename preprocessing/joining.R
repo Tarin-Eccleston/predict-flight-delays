@@ -1,6 +1,5 @@
 setwd("/Users/tarineccleston/Documents/Software-DS/predict-flight-delays")
 library(tidyverse)
-library(ggplot2)
 
 # read data
 flights_df = read.csv("data/input/flights.csv")
