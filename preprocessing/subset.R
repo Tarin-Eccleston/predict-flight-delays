@@ -3,7 +3,7 @@ library(tidyverse)
 library(ggplot2)
 
 # read data
-load("data/output/cleaning/flights_time_cleaned.RData")
+load("data/intermediate/cleaning/flights_subset.RData")
 
 # create n sample subset from our original data
 # this will be used for gathering weather data and for building our model
