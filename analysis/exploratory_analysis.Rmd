@@ -254,15 +254,13 @@ snow_label_plot
 
 ## 5. Analytical Plan
 
-The analytical plan will involve continuing to explore trends between weather data and weather-related flight delays. I believe other factors such as geographic location and time ultimately affect the weather conditions of the departure airport for a particular flight. I further used OpenWeather API again to gather a greater volume of data and more variables indicating weather conditions, such as "thunderstorms" or "rain."
+The analytical plan will involve continuing to explore trends between weather data and weather-related flight delays. I believe other factors such as geographic location and time ultimately affect the weather conditions of the departure airport for a particular flight. I further used OpenWeather API to gather a greater volume of data including more variables indicating weather conditions, such as "thunderstorms" or "rain."
 
-To make flight delay predictions, I will start with a decision tree model and compare the performances between using all available data, only time and weather data, only weather data, and only weather condition data for building the model. I will then create a random forest model and make similar comparisons between each variable group I choose to include. Performances between each model will be evaluated using 10-fold cross-validation, and appropriate criteria will be chosen for the comparison, such as P-values and accuracy. I am aware that there are quite a number of covariates in the data, I could address this by 
+To predict flight delays, I will start with a decision tree model, and evaluate performances, and improve it by using ensemble techniques such as random forests and xgboost to name a few. Performances between each model will be evaluated using 10-fold cross-validation, and appropriate criteria will be chosen for the comparison, such as P-value and accuracy. Pre-processing techniques will be used to ensure the data is of good quality and format before modelling.
 
-Once the models have been trained and evaluated, I will select the best performing model and use it to make flight delay predictions. These predictions can be used by airlines to proactively adjust their schedules and minimize the impact of weather-related delays on their operations.
+## 6. Discussion
 
-Overall, this analytical plan aims to explore the relationship between weather data and flight delays and to build models that can accurately predict these delays. By doing so, we can help airlines improve their operations and provide a better experience for passengers.
-
-## 6. Appendix
+## 7. Appendix
 
 ### Data cleaning
 
@@ -699,3 +697,8 @@ class WeatherMiner:
             return {}
 ```
 
+~Information Bank~
+
+Once the models have been trained and evaluated, I will select the best performing model and use it to make flight delay predictions. These predictions can be used by airlines to proactively adjust their schedules and minimize the impact of weather-related delays on their operations.
+
+Overall, this analytical plan aims to explore the relationship between weather data and flight delays and to build models that can accurately predict these delays. By doing so, we can help airlines improve their operations and provide a better experience for passengers.
