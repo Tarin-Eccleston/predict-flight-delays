@@ -259,8 +259,29 @@ I used a subset sample of 10000 flights with equal balance of weather delayed an
 \pagebreak
 ## 6. Discussion
 
+For the initial model, I used both the numerical and categorical weather data. Unsurprisingly, I found that the decision tree model performed the worst, with an accuracy of 61%. I then improved this by using Random Forests, which improved the test accuracy to 63%. Adaboost didn't produce particularly great results, with an accuracy of 62%, while XGBoost had the highest accuracy of 64.6%. In the end, XGBoost seemed to be the best model for this particular dataset. Note that I used 10-fold cross-validation to conduct hyper parameter tuning for each model, and final accuracy is based on the best model's performance on the test data. I explored a reasonable range of hyper parameters such as max tree depth and learning rate, where there is a trade-off on search comprehensiveness and optimisation bias.
 
+I repeated the above modeling steps, but with only using categorical weather data. The accuracy for XGBoost dropped to 59.8%. I repeated the modeling using XGBoost with only numerical weather data and found an accuracy score of 64.6%, which is the same score as the model with combined weather data. I can infer from this that categorical weather data, such as "heavy rain" or "light snow," doesn't provide much more information to the model, as this is already represented in primary weather data. Additionally, categorical weather data is often quite inconsistent, as I have observed that some observations might indicate rainfall in cm for the hour, while the categorical data would indicate that it was not raining. After some research, I removed the dew point variable from the dataset, as this is mathematically related to temperature and humidity. This resulted in an increase in accuracy to 65%.
 
+The overall performance of the model is quite poor with an accuracy of 65%, which isn't useful for production. This is only 15% better than guessing at random on our test set. The model is still useful though, as we can use model comparisons and important features to learn more about our data. Namely, categorical weather data is redundant or erroneous, and the most important features to distinguish weather-delayed and other flights seem to be temperature, pressure, humidity, and wind speed.
+
+#### Variable Importance Chart XGBoost Model (Numerical weather variables included, and removal of dew point)
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7} 
+knitr::include_graphics("../data/images/variable_importance_processed.png")
+```
+
+#### Accuracy of XGBoost Model (Numerical weather variables included, and removal of dew point)
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7} 
+knitr::include_graphics("../data/images/xgboost_accuracy.png")
+```
+
+It is not possible to significantly increase our model accuracy through preprocessing, as the numerical weather data is relatively consistent, reliable, and clean. Gains in model performance can be increased by improving the experimental design. I only collected weather data once for each flight, and that was located exactly at the origin airport. In reality, bad weather along the flight path could also cause weather delays. I plan to collect more weather data along the flight route of each flight and use that in the next XGBoost model. Collecting more weather data per flight using the OpenWeather API would result in greater cost. Instead, I will minimize my observations and only use flight data from certain airports such as Hartsfield–Jackson Atlanta International Airport, Dallas/Fort Worth International Airport, or John F. Kennedy International Airport.
+
+Other things to note are that small planes are more affected by bad weather compared to larger planes. This will affect the likelihood that the flight is delayed for weather reasons. The simplest way to model this is by adding route length into the model, as this is highly correlated with plane size. Then, we can determine how important it is at predicting weather delays. Lastly, I plan to normalize my numerical data in the next modeling iteration of XGBoost, as it will improve the convergence of the algorithm and prevent it from being dominated by variables with larger magnitudes, such as pressure.
+
+\pagebreak
 ## 7. Appendix
 
 ### Data cleaning
