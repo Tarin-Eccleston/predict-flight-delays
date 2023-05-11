@@ -17,7 +17,7 @@ I planned to collect flight data from two APIs: FlightAware and FlightRadar24. H
 
 To collect flight data, I found a useful source on Kaggle with 5.8 million flight records from 2015. While I was not able to access flight data from recent years (2020 onwards), the data was still valuable for my analysis. The source included four datasets with flight, airport, airline, and cancellation reason information. I was able to extract important information about flight delays, including weather-related delays, and departure location and time information for weather data collection.
 
-To collect weather data, I used the OpenWeather API, which provided variables such as temperature, wind speed, pressure, rainfall, and humidity. I extracted weather data associated with the origin airport since it was assumed that the primary cause of weather-related flight delays is immediate weather around the departure airport. After preprocessing the flight data, I created a random subset of 500 weather-delayed and 500 non-weather-delayed flights. Using Python, I called the OpenWeather API for each flight in the subset, using the airport IATA code and scheduled flight timestamp to return the associated weather data. Some observations were excluded due to missing data caused by connection issues.
+I used the OpenWeather API to collect weather data, which provided variables such as temperature, wind speed, pressure, rainfall, and humidity. I extracted weather data associated with the origin airport since it was assumed that the primary cause of weather-related flight delays is immediate weather around the departure airport. After preprocessing the flight data, I subset sampled 5000 weather-delayed and 5000 other flights. Using Python, I called the OpenWeather API for each flight in the sample, using the airport coordinates and scheduled flight timestamp to return the associated weather data. Some observations were excluded due to missing data caused by connection issues.
 
 ## 3. Data Processing
 
@@ -33,7 +33,7 @@ load("../data/intermediate/cleaning/flights_time_cleaned.RData")
 airports_df = read.csv("../data/input/airports.csv")
 ```
 
-Firstly, since we are trying to predict the delay in future flights based on weather data, I removed columns which are not important to building our model and collecting data from the OpenWeather API. I removed cancellation data as I believe it's not useful for my investigation since there are many other operational factors that are not provided by the data which could result in a cancellation over a delay. Flight delay is the difference between scheduled and actual departure time, usually due to operational or weather issues. Therefore, I dropped time info after departure time, such as taxi time, arrival time, and flight time, and info on whether the flight was diverted.
+Firstly, since we are trying to predict the delay in future flights based on weather data, I removed columns which are not important to building our model and collecting data from the OpenWeather API. Flight delay is the difference between scheduled and actual departure time, usually due to operational or weather issues. Therefore, I dropped time info after departure time, such as taxi time, arrival time, and flight time, and info on whether the flight was diverted.
 
 ```{r remove-cols, eval=FALSE, echo=TRUE}
 flights_processed_df = flights_processed_df %>%
@@ -43,7 +43,7 @@ flights_processed_df = flights_processed_df %>%
 
 To obtain relevant info for each flight, I joined dataframes on airlines, airports, and cancellation reasons. I used an inner join for airlines and to get carrier names to investigate delay occurrences between carriers. I used IATA codes to get airport info, including coordinates for weather data. I used a left join for cancellation reasons to replace codes with descriptive reasons.
 
-I combined delay times for air system, security, airline, and late aircraft delay and created another column called "OTHER_DELAY" as these delay times are caused by operational issues. I kept the "WEATHER_DELAY" column as is. Combining the columns simplifies the problem for our investigation as we don't need to separate delay types for reasons which aren't related to weather for this study. If a flight is delayed for more than 15 minutes in "OTHER_DELAY" and/or "WEATHER_DELAY", it is classified as being delayed for that particular reason. If flights are delayed for more than 15 minutes for a particular reason, then we can conclude that it was delayed for that reason.
+I combined delay times for air system, security, airline, and late aircraft delay and created another column called "OTHER_DELAY" as these delay times are caused by operational issues. I kept the "WEATHER_DELAY" column as is. Combining the columns simplifies the problem for our investigation as we don't need to separate delay types for reasons which aren't related to weather for this study. If flights are delayed for more than 15 minutes for a particular reason, then we can conclude that it was delayed for that reason.
 
 The original dataframe has flight dates where the day, month, and year are separated across columns. I combined these together into a datetime object. I reformatted military text time to be in datetime format for better analysis.
 
@@ -100,7 +100,7 @@ It is important to have uniformly distributed data across all days in 2015 in or
 
 Extreme weather events such as hurricanes, tropical storms, and winter storms can occur during October 2015. It is important to note this as it could affect our data analysis and model by causing some bias. However I believe this shouldn't be a problem as we have plenty of data from adjacent months to capture these extreme weather events.
 
-```{r flight_numbers, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center"}
+```{r flight_numbers, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7}
 flights_processed_df$FLIGHT_DATETIME <- as.Date(flights_processed_df$FLIGHT_DATETIME)
 
 flights_vs_month = ggplot(flights_processed_df, aes(x = FLIGHT_DATETIME)) +
@@ -112,16 +112,6 @@ flights_vs_month
 ```
 
 ### 4.2 Question 2: Are there any seasonal, day or time-of-day patterns in flight delays?
-
-I intend to explore the relationship between time and the chance of delays, for each month, day of the week, and hour of day. The first step involves grouping all flights into each respective category. Then, I calculated the percentage of delays caused by other factors or weather for all flights in each of these categories. The plots below show the percentage of other delays and weather delays for each category.
-
-The first plot shows the seasonal changes in flight delay percentages throughout 2015. Note that flights in October are not included in my investigation. There are two peaks in other flight delays: for December-February, marking the Christmas holiday period, and June-July, the months when people go on summer vacation. This is expected, as there could be issues such as congested runways and airspace, and staff shortage, which would result in operational flight delays. Weather delay percentages for each month appear to correlate with operational delays. A conclusion we can draw from this is that these two periods have greater extreme weather occurrences.
-
-The second plot shows the changes in flight delays by day of the week. As expected, busy days such as Monday and Thursday have a greater percentage of operational delays compared to other days of the week. We would expect that flights have a uniform percentage chance of delays due to weather for each day of the week, but there seems to be a slight correlation between the percentage delay for operational and weather causes.
-
-The third plot shows the hourly changes in flight delay percentages. It appears that flights later in the day experience a higher chance of getting delayed, as there is a higher likelihood of delays building up due to earlier flight delays and disruptions, such as bad weather, late aircraft arrival, or air traffic congestion. The same trend occurs for weather delay percentages, as it is well-researched that flights later in the day may experience worse weather due to a number of factors. One factor is that thunderstorms and other weather events tend to occur more frequently in the afternoon and evening hours, especially during the summer months. Additionally, as the day progresses, the heat of the sun can cause instability in the atmosphere, leading to the formation of thunderstorms and other types of severe weather.
-
-Flights can experience both weather and operational delays. The correlation between operational and weather delay percentages for all categories can also be due to late aircraft arrival caused by regional weather disruptions. Although it is useful to understand the relationship between time and the percentage of flight delays due to weather, this could be better explained by weather conditions, which are a function of seasonality, time of day, and geography, among other factors.
 
 ```{r delay-times, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center"}
 # date dataframe
@@ -177,7 +167,7 @@ flights_delay_by_hour_df = flights_processed_df %>%
 flights_delay_by_hour_df = na.omit(flights_delay_by_hour_df) 
 
 # combined plots
-ggplot(flights_delay_by_month_df, aes(x = MONTH)) +
+flights_delay_by_month = ggplot(flights_delay_by_month_df, aes(x = MONTH)) +
   geom_area(aes(y = PERCENT_OTHER_DELAY, fill = "Other Delay"), alpha = 0.5) +
   geom_area(aes(y = PERCENT_WEATHER_DELAY, fill = "Weather Delay"), alpha = 0.5) +
   geom_smooth(aes(y = PERCENT_OTHER_DELAY, color = "Other Delay"), method = "loess", se = FALSE, span = 0.25) +
@@ -188,17 +178,7 @@ ggplot(flights_delay_by_month_df, aes(x = MONTH)) +
   labs(x = "Months of 2015", y = "Percentage of Delays (%)", fill = "", color = "") +
   ggtitle("Percentage of Other and Weather Delays by Months of 2015")
 
-ggplot(flights_delay_by_day_df, aes(x = DAY_OF_WEEK)) +
-  geom_bar(aes(y = PERCENT_OTHER_DELAY, fill = "Other Delay"), stat = "identity") +
-  geom_bar(aes(y = PERCENT_WEATHER_DELAY, fill = "Weather Delay"), stat = "identity") +
-  scale_fill_manual(values = c("Other Delay" = "grey", "Weather Delay" = "red")) +
-  labs(x = "Day of Weeks in 2015", y = "Percentage of Delays (%)", fill = "") +
-  ggtitle("Percentage of Other and Weather Delays by Day of Weeks in 2015") +
-  theme(legend.position = "bottom") +
-  geom_text(aes(y = PERCENT_OTHER_DELAY, label = paste0(round(PERCENT_OTHER_DELAY, 1), "%")), vjust = -0.5) +
-  geom_text(aes(y = PERCENT_WEATHER_DELAY, label = paste0(round(PERCENT_WEATHER_DELAY, 1), "%")), vjust = -0.5)
-
-ggplot(flights_delay_by_hour_df, aes(x = HOUR)) +
+flights_delay_by_hour = ggplot(flights_delay_by_hour_df, aes(x = HOUR)) +
   geom_area(aes(y = PERCENT_OTHER_DELAY, fill = "Other Delay"), alpha = 0.5) +
   geom_area(aes(y = PERCENT_WEATHER_DELAY, fill = "Weather Delay"), alpha = 0.5) +
   geom_smooth(aes(y = PERCENT_OTHER_DELAY, color = "Other Delay"), method = "loess", se = FALSE, span = 0.25) +
@@ -211,9 +191,25 @@ ggplot(flights_delay_by_hour_df, aes(x = HOUR)) +
   theme(legend.position = "bottom", axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
+I explored the relationship between time and the flight delays. The first step involves grouping all flights into each respective category. Then, I calculated the percentage of delays caused by other factors or weather for all flights in each of these categories. The plots below show the percentage of other delays and weather delays for each category.
+
+The first plot shows the seasonal changes in flight delay percentages throughout 2015. Note that flights in October are excluded from my investigation. There are two peaks in other flight delays: December-February, marking the Christmas holiday period, and June-July, the months when people go on summer vacation. Busy periods can expect issues such as congested runways and airspace, and staff shortage, which would result in operational flight delays. The seasonality for weather delays appear to be similar with operational delays. A conclusion we can draw from this is that these two periods have greater extreme weather occurrences. 
+
+```{r delay_times_flights_delay_by_month, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7}
+flights_delay_by_month
+```
+
+It appears that flights later in the day experience a higher chance of getting delayed, as there is a higher likelihood of delays building up due to earlier flight delays and disruptions, such as bad weather, late aircraft arrival, or air traffic congestion. The same trend occurs for weather delay percentages, as it is well-researched that flights later in the day may experience worse weather due to a number of factors. One factor is that thunderstorms and other weather events tend to occur more frequently in the afternoon and evening hours, especially during the summer months. Additionally, as the day progresses, the heat of the sun can cause instability in the atmosphere, leading to the formation of thunderstorms and other types of severe weather.
+
+```{r delay_times_flights_delay_by_hour, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7}
+flights_delay_by_hour
+```
+
+Flights can experience both weather and operational delays. The correlation between operational and weather delay can also be due to late aircraft arrival caused by regional weather disruptions. Although it is useful to understand the relationship between time and the percentage of flight delays due to weather, this could be better explained by weather conditions, which are a function of seasonality, time of day, and geography, among other factors.
+
 ### 4.3 Question 3: Can we distinguish between weather delayed and non-weather delayed flights based on weather data?
 
-```{r weather-data, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center"}
+```{r weather-data, echo=FALSE, message=FALSE, warning=FALSE}
 load("../data/intermediate/cleaning/flights_weather.RData")
 
 temp_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y = temp, fill = factor(IS_WEATHER_DELAY))) +
@@ -236,29 +232,34 @@ snow_label_plot = ggplot(flights_weather_df, aes(x = snow, y = IS_WEATHER_DELAY,
   labs(x = "Types of Snow", y = "Weather Delayed", title = "Snow vs Weather Delay")
 ```
 
-I would like to compare the differences in physical weather measurements between weather-delayed flights and other flights and infer from there which weather factors are most important. The most interesting plots was that of humidity against wind speed. I found that greater values for both variables increased the likelihood of delayed flights. These two variables can indicate presence of a thunderstorm. Thunderstorms are one of the main causes of flight delays and are more likely to occur when there is a lot of moisture in the air, which can lead to the formation of clouds and thunderstorms. The median humidity are higher for weather-delayed flights compared to other flights. Gale force winds during thunderstorms are also a common cause of flight delays, as they can make takeoff unsafe. The median wind speed appears higher for delayed flights compared to other flights, indicating its significance
+I would like to compare the differences in physical weather measurements between weather-delayed flights and other flights and infer from there which weather factors are most important. The most interesting plots was that of humidity against wind speed. I found that higher values for both variables increased the likelihood of delayed flights. These two variables could indicate presence of a thunderstorm. Thunderstorms are one of the main causes of flight delays and are more likely to occur when there is a lot of moisture in the air, which can lead to the formation of clouds and thunderstorms. The median humidity are higher for weather-delayed flights compared to other flights. Gale force winds during thunderstorms are also a common cause of flight delays, as they can make takeoff unsafe. The median wind speed appears higher for delayed flights compared to other flights, indicating its significance
 
-```{r}
+```{r weather_data_humidity_vs_wind_speed, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7}
 humidity_vs_wind_speed_plot
 ```
-Weather-delayed flights appear to have a multimodal distribution of temperatures with centers at 24C and -2C, compared to other flights which appears uni-modal and skewed to the left with centrality at 24C. The -2C temperature center for weather delayed flights could be capturing the flight events during blizzards and snowstorms.
+\pagebreak
+Weather-delayed flights appear to have a multimodal distribution of temperatures with centers at 24C and -2C, compared to other flights which appears uni-modal and skewed to the left with centrality at 24C. The -2C temperature center for weather delayed flights could be capturing the flight events during blizzards and snowstorms. 
 
-```{r}
+```{r weather_data_temp, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7}
 temp_plot
 ```
+
 I also gathered categorical data about the weather conditions from OpenWeather. I found that snow conditions appears to have the biggest effect on weather a flight was delayed or not.
 
-```{r}
+```{r weather_data_snow, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7}
 snow_label_plot
 ```
 
 ## 5. Analytical Plan
 
-The analytical plan will involve continuing to explore trends between weather data and weather-related flight delays. I believe other factors such as geographic location and time ultimately affect the weather conditions of the departure airport for a particular flight. I further used OpenWeather API to gather a greater volume of data including more variables indicating weather conditions, such as "thunderstorms" or "rain."
+The analytical plan will involve continuing to explore trends between weather data and weather-related flight delays. I believe other factors such as geographic location and time ultimately affect the weather conditions of the departure airport for a particular flight.
 
-To predict flight delays, I will start with a decision tree model, and evaluate performances, and improve it by using ensemble techniques such as random forests and xgboost to name a few. Performances between each model will be evaluated using 10-fold cross-validation, and appropriate criteria will be chosen for the comparison, such as P-value and accuracy. Pre-processing techniques will be used to ensure the data is of good quality and format before modelling.
+I used a subset sample of 10000 flights with equal balance of weather delayed and other flights. Pre-processing techniques was used to ensure the data is of good quality and format before modelling. To predict flight delays, I started with a decision tree model, and evaluate performance. I improved on this by using ensemble techniques such as random forests, bagging, adaboost, and xgboost. Performances between each model are evaluated using 10-fold cross-validation, and appropriate criteria such as P-value and accuracy. This is the preliminary modelling, and is used to find the most important features.
 
+\pagebreak
 ## 6. Discussion
+
+
 
 ## 7. Appendix
 
