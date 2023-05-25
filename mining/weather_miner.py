@@ -28,50 +28,7 @@ class WeatherMiner:
                 "rainfall_3hr": weather_event_raw["data"][0].get("rain", {}).get("3h"),
                 "snowfall_1hr": weather_event_raw["data"][0].get("snow", {}).get("1h"),  
                 "snowfall_3hr": weather_event_raw["data"][0].get("snow", {}).get("3h"),  
-                "thunderstorm": "None",  
-                "drizzle": "None",          
-                "rain": "None",
-                "snow": "None",
-                "mist": "None",
-                "smoke": "None",
-                "haze": "None",
-                "dust": "None",
-                "fog": "None",
-                "sand": "None",
-                "ash": "None",
-                "squall": "None",
-                "tornado": "None",
             }
-
-            # check for each type of weather event and add the description to the corresponding column
-            for weather in weather_event_raw["data"][0].get("weather", []):
-                if "Rain" in weather["main"]:
-                    weather_event["rain"] = weather["description"]
-                elif "Snow" in weather["main"]:
-                    weather_event["snow"] = weather["description"]
-                elif "Thunderstorm" in weather["main"]:
-                    weather_event["thunderstorm"] = weather["description"]
-                elif "Drizzle" in weather["main"]:
-                    weather_event["drizzle"] = weather["description"]
-                elif "Mist" in weather["main"]:
-                    weather_event["mist"] = weather["description"]
-                elif "Smoke" in weather["main"]:
-                    weather_event["smoke"] = weather["description"]
-                elif "Haze" in weather["main"]:
-                    weather_event["haze"] = weather["description"]
-                elif "Dust" in weather["main"]:
-                    weather_event["dust"] = weather["description"]
-                elif "Fog" in weather["main"]:
-                    weather_event["fog"] = weather["description"]
-                elif "Sand" in weather["main"]:
-                    weather_event["sand"] = weather["description"]
-                elif "Ash" in weather["main"]:
-                    weather_event["ash"] = weather["description"]
-                elif "Squall" in weather["main"]:
-                    weather_event["squall"] = weather["description"]
-                elif "Tornado" in weather["main"]:
-                    weather_event["tornado"] = weather["description"]
-
             return weather_event
         else:
             print("Error: Could not retrieve weather data")
