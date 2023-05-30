@@ -20,7 +20,6 @@ class WeatherMiner:
                 "temp": weather_event_raw["data"][0].get("temp"),
                 "pressure": weather_event_raw["data"][0].get("pressure"),
                 "humidity": weather_event_raw["data"][0].get("humidity"),
-                "dew_point": weather_event_raw["data"][0].get("dew_point"),
                 "clouds": weather_event_raw["data"][0].get("clouds"),
                 "visibility": weather_event_raw["data"][0].get("visibility"),
                 "wind_speed": weather_event_raw["data"][0].get("wind_speed"),

@@ -3,7 +3,7 @@ library(tidyverse)
 library(ggplot2)
 
 # read data
-load("data/output/cleaning/flights_joined.RData")
+load("data/intermediate/cleaning/flights_joined.RData")
 
 # if flight is delayed for more than 15 minutes due to weather or any other factors
 # we don't need to separate other delay types for this study
@@ -20,7 +20,7 @@ flights_processed_df["OTHER_DELAY"][is.na(flights_processed_df["OTHER_DELAY"])] 
 flights_processed_df["WEATHER_DELAY"][is.na(flights_processed_df["WEATHER_DELAY"])] = 0
 flights_processed_df["IS_OTHER_DELAY"][is.na(flights_processed_df["IS_OTHER_DELAY"])] = 0
 flights_processed_df["IS_WEATHER_DELAY"][is.na(flights_processed_df["IS_WEATHER_DELAY"])] = 0
-
+x
 # convert numbers to string days of week
 day_names = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 # Map day names to day numbers
@@ -62,12 +62,7 @@ flights_processed_df = flights_processed_df %>%
   mutate(INDEX = row.names(flights_processed_df)) %>%
   relocate(INDEX, .before = "FLIGHT_DATETIME")
 
-# remove cancelled flights, not important
-flights_processed_df = flights_processed_df %>%
-  filter(CANCELLED == 0)
-
 # save whole data for exploratory analysis
 save(flights_processed_df, file = "data/output/cleaning/flights_time_cleaned.RData")
-write.table(flights_processed_df, file = "data/output/cleaning/flights_time_cleaned.csv", sep = ",", row.names = FALSE)
-
+write.table(flights_processed_df, file = "data/intermediate//flights_time_cleaned.csv", sep = ",", row.names = FALSE)
 

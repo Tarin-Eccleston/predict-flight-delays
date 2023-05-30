@@ -3,7 +3,7 @@ library(tidyverse)
 
 load("data/intermediate/cleaning/flights_time_cleaned.RData")
 
-weather_data_files = list.files("data/intermediate/weather", pattern = NULL, full.names = TRUE)
+weather_data_files = list.files("data/intermediate/weather_sample_1", pattern = NULL, full.names = TRUE)
 weather_df = data.frame()
 
 # combine all .csv files
@@ -30,8 +30,9 @@ flights_weather_df = flights_processed_df %>%
 write.table(flights_weather_df, file = "data/intermediate/cleaning/flights_weather.csv", sep = ",", row.names = FALSE)
 save(flights_weather_df, file = "data/intermediate/cleaning/flights_weather.RData")
 
-# keep weather variables which are irrelevant to modelling
+# keep weather variables which are relevant to modelling
 flights_weather_df = flights_weather_df %>%
-  select(INDEX, IS_WEATHER_DELAY:ncol(flights_weather_df))
+  select(INDEX, 30:41) %>%
+  select(-c("dew_point"))
 
 write.table(flights_weather_df, file = "data/intermediate/modelling/flights_weather_modelling.csv", sep = ",", row.names = FALSE)

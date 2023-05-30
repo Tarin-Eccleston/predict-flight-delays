@@ -1,10 +1,12 @@
 ---
-geometry: "left=1.5cm,right=1.5cm,top=1.5cm,bottom=1.5cm"
+geometry: left=1.5cm,right=1.5cm,top=1.5cm,bottom=1.5cm
 output:
+  html_document:
+    df_print: paged
   pdf_document:
     pandoc_args: "--quiet"
 ---
-## Milestone 2 - Predict Flight Delays
+## Milestone 3 - Predict Flight Delays
 ### Author: Tarin Eccleston
 
 ## 1. Goal
@@ -96,7 +98,7 @@ flight_plot = airport_plot +
 flight_plot
 ```
 
-It is important to have uniformly distributed data across all days in 2015 in order to capture seasonal, weather and holiday patterns that might contribute to flight delays. There is a section of data missing from October 2015. After investigating the pre-processing phase, it appears that observations between these two times have been originally included however each observation has numeric airport codes instead of IATA codes. These observations are removed after inner joining with the airports dataframe as we are joining by IATA code to get airport names and coordinates. Since we cannot associate the flights with airports between October 2015, we cannot gather the weather data to build our model.
+It is important to have uniformly distributed data across all days in 2015 in order to capture weather and holiday patterns that might contribute to flight delays. It appears that observations in October uses 5-digit numeric airport codes instead of IATA codes. I couldn't find any references to airports using these codes, so I excluded these observations from my investigation as since we cannot associate the flights with airports between October 2015, and cannot gather the weather data to build our model as a result. One suggested method is to impute these values by searching the flight codes and scheduled departure time and finding the departure airport. However this requires a), a large budget for API calls or b), access to FAA's flight database, neither which I have.
 
 Extreme weather events such as hurricanes, tropical storms, and winter storms can occur during October 2015. It is important to note this as it could affect our data analysis and model by causing some bias. However I believe this shouldn't be a problem as we have plenty of data from adjacent months to capture these extreme weather events.
 
@@ -111,7 +113,7 @@ flights_vs_month = ggplot(flights_processed_df, aes(x = FLIGHT_DATETIME)) +
 flights_vs_month
 ```
 
-### 4.2 Question 2: Are there any seasonal, day or time-of-day patterns in flight delays?
+### 4.2 Question 2: Are there any day or time-of-day patterns in flight delays?
 
 ```{r delay-times, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center"}
 # date dataframe
@@ -193,7 +195,7 @@ flights_delay_by_hour = ggplot(flights_delay_by_hour_df, aes(x = HOUR)) +
 
 I explored the relationship between time and the flight delays. The first step involves grouping all flights into each respective category. Then, I calculated the percentage of delays caused by other factors or weather for all flights in each of these categories. The plots below show the percentage of other delays and weather delays for each category.
 
-The first plot shows the seasonal changes in flight delay percentages throughout 2015. Note that flights in October are excluded from my investigation. There are two peaks in other flight delays: December-February, marking the Christmas holiday period, and June-July, the months when people go on summer vacation. Busy periods can expect issues such as congested runways and airspace, and staff shortage, which would result in operational flight delays. The seasonality for weather delays appear to be similar with operational delays. A conclusion we can draw from this is that these two periods have greater extreme weather occurrences. 
+The first plot shows the changes in flight delay percentages throughout 2015. Note that flights in October are excluded from my investigation. There are two peaks in other flight delays: December-February, marking the Christmas holiday period, and June-July, the months when people go on summer vacation. Busy periods can expect issues such as congested runways and airspace, and staff shortage, which would result in operational flight delays. Both plots for weather delays appear to be similar with operational delays. A conclusion we can draw from this is that these two periods have greater extreme weather occurrences. However note that we don't have multiple years of data to accurate confirm that these peaks are indeed seasonal.
 
 ```{r delay_times_flights_delay_by_month, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7}
 flights_delay_by_month
@@ -205,7 +207,7 @@ It appears that flights later in the day experience a higher chance of getting d
 flights_delay_by_hour
 ```
 
-Flights can experience both weather and operational delays. The correlation between operational and weather delay can also be due to late aircraft arrival caused by regional weather disruptions. Although it is useful to understand the relationship between time and the percentage of flight delays due to weather, this could be better explained by weather conditions, which are a function of seasonality, time of day, and geography, among other factors.
+Flights can experience both weather and operational delays. The correlation between operational and weather delay can also be due to late aircraft arrival caused by regional weather disruptions. Although it is useful to understand the relationship between time and the percentage of flight delays due to weather, this could be better explained by weather conditions, which are a function of time of day, and geography, among other factors.
 
 ### 4.3 Question 3: Can we distinguish between weather delayed and non-weather delayed flights based on weather data?
 
@@ -227,9 +229,10 @@ humidity_vs_wind_speed_plot = ggplot(flights_weather_df, aes(x = humidity, y = w
   labs(title = "Comparison of Humidity and Wind Speed Between Delay Types",
        x = "Humidity (%)", y = "Wind Speed (m/s)")
 
-snow_label_plot = ggplot(flights_weather_df, aes(x = snow, y = IS_WEATHER_DELAY, color = snow)) +
+snow_label_plot = ggplot(flights_weather_df, aes(x = snow, y = factor(IS_WEATHER_DELAY), color = snow)) +
   geom_jitter(width = 0.2, height = 0.1, size = 3, alpha = 0.5) +
-  labs(x = "Types of Snow", y = "Weather Delayed", title = "Snow vs Weather Delay")
+  labs(x = "Types of Snow", y = "", title = "Snow vs Weather Delay") +
+  scale_y_discrete(labels = c("Other Flights", "Weather Delayed Flights"))
 ```
 
 I would like to compare the differences in physical weather measurements between weather-delayed flights and other flights and infer from there which weather factors are most important. The most interesting plots was that of humidity against wind speed. I found that higher values for both variables increased the likelihood of delayed flights. These two variables could indicate presence of a thunderstorm. Thunderstorms are one of the main causes of flight delays and are more likely to occur when there is a lot of moisture in the air, which can lead to the formation of clouds and thunderstorms. The median humidity are higher for weather-delayed flights compared to other flights. Gale force winds during thunderstorms are also a common cause of flight delays, as they can make takeoff unsafe. The median wind speed appears higher for delayed flights compared to other flights, indicating its significance
@@ -252,16 +255,22 @@ snow_label_plot
 
 ## 5. Analytical Plan
 
-The analytical plan will involve continuing to explore trends between weather data and weather-related flight delays. I believe other factors such as geographic location and time ultimately affect the weather conditions of the departure airport for a particular flight.
+The analytical plan will involve continuing to explore trends between weather data and weather-related flight delays, and building models to predict if a flight will be delayed due to weather or not. I initially used a subset sample of 10000 flights with equal balance of weather delayed and other flights for my modelling. I undersampled my non-weather delayed flights class label, and all origin airports have an equal representation in the dataset. Pre-processing techniques such as normalisation was used to ensure the data is of good quality and format before modelling. 
 
-I used a subset sample of 10000 flights with equal balance of weather delayed and other flights. Pre-processing techniques was used to ensure the data is of good quality and format before modelling. To predict flight delays, I started with a decision tree model, and evaluate performance. I improved on this by using ensemble techniques such as random forests, bagging, adaboost, and xgboost. Performances between each model are evaluated using 10-fold cross-validation, and appropriate criteria such as P-value and accuracy. This is the preliminary modelling, and is used to find the most important features.
+I started with a decision tree model, and evaluated it's performance. I improved on this by using ensemble techniques such as random forests, adaboost, and xgboost. Hyperparameter tuning was conducted using 10-fold cross-validation for each model, and the best model with the optimum hyperparameters were chosen based on the validation accuracies. I explored a reasonable range of hyper parameters such as max tree depth and learning rate, where there is a trade-off on search comprehensiveness and optimization bias. I then used appropriate criteria such as ______ and accuracy to finally compare different model architectures.
+
+Normalisation was also applied to the all the variables independantly between the training and validation splits to insure no information leakage. Normalizing variables ensures that each feature is on a similar scale. This is important because the chosen machine learning architectures can be sensitive to the relative scales of different variables. When variables have vastly different scales, it can lead to biased learning and an undue influence of variables with larger scales on the model training process.
 
 \pagebreak
-## 6. Discussion
+## 6. Results and Interpretations
 
-For the initial model, I used both the numerical and categorical weather data. Unsurprisingly, I found that the decision tree model performed the worst, with an accuracy of 61%. I then improved this by using Random Forests, which improved the test accuracy to 63%. Adaboost didn't produce particularly great results, with an accuracy of 62%, while XGBoost had the highest accuracy of 64.6%. In the end, XGBoost seemed to be the best model for this particular dataset. Note that I used 10-fold cross-validation to conduct hyper parameter tuning for each model, and final accuracy is based on the best model's performance on the test data. I explored a reasonable range of hyper parameters such as max tree depth and learning rate, where there is a trade-off on search comprehensiveness and optimisation bias.
+### Initial Modelling
 
-I repeated the above modeling steps, but with only using categorical weather data. The accuracy for XGBoost dropped to 59.8%. I repeated the modeling using XGBoost with only numerical weather data and found an accuracy score of 64.6%, which is the same score as the model with combined weather data. I can infer from this that categorical weather data, such as "heavy rain" or "light snow," doesn't provide much more information to the model, as this is already represented in primary weather data. Additionally, categorical weather data is often quite inconsistent, as I have observed that some observations might indicate rainfall in cm for the hour, while the categorical data would indicate that it was not raining. After some research, I removed the dew point variable from the dataset, as this is mathematically related to temperature and humidity. This resulted in an increase in accuracy to 65%.
+For the initial models, I used both the numerical and categorical weather data. Unsurprisingly, I found that the decision tree model performed the worst, with an accuracy of 61%. I then improved this by using Random Forests, which increased test accuracy to 63%. Adaboost didn't produce particularly great results, with an accuracy of 62%, while XGBoost had the highest accuracy of 64.6%. In the end, XGBoost seemed to be the best model for this particular dataset. I repeated the above, but only using categorical weather data. The accuracy for all models dropped. I repeated the same steps but only using numerical weather data and found an accuracy score of 64.6% for XGBoost, which is a similar score to the model with both numerical and categorical weather data. 
+
+I can infer from this that categorical weather data, such as "heavy rain" or "light snow," doesn't provide much more information to the model, as this is already represented in numerical weather data. Additionally, categorical weather data is often quite inconsistent, as I have observed that some observations might indicate rainfall in cm for the hour, while the categorical data would indicate that it was not raining. I decided to drop the categorical weather data.
+
+After some research, I removed the dew point variable from the dataset, as this is redundant since it is mathematically related to temperature and humidity. This resulted in an increase in accuracy to 65%. 
 
 The overall performance of the model is quite poor with an accuracy of 65%, which isn't useful for production. This is only 15% better than guessing at random on our test set. The model is still useful though, as we can use model comparisons and important features to learn more about our data. Namely, categorical weather data is redundant or erroneous, and the most important features to distinguish weather-delayed and other flights seem to be temperature, pressure, humidity, and wind speed.
 
@@ -279,7 +288,56 @@ knitr::include_graphics("../data/images/xgboost_accuracy.png")
 
 It is not possible to significantly increase our model accuracy through preprocessing, as the numerical weather data is relatively consistent, reliable, and clean. Gains in model performance can be increased by improving the experimental design. I only collected weather data once for each flight, and that was located exactly at the origin airport. In reality, bad weather along the flight path could also cause weather delays. I plan to collect more weather data along the flight route of each flight and use that in the next XGBoost model. Collecting more weather data per flight using the OpenWeather API would result in greater cost. Instead, I will minimize my observations and only use flight data from certain airports such as Hartsfield–Jackson Atlanta International Airport, Dallas/Fort Worth International Airport, or John F. Kennedy International Airport.
 
+### Multi-modal Modelling
+
+I believe other factors such as geographic location and time ultimately affect the weather conditions of the departure airport for a particular flight. 
+- Try resubset flight data using maybe 3 top airports?
+- Use some math to calculate locations and timestamps (3 total weather samples)
+- Redesign api weather data collection system
+- Remodel, maybe with equal weights across all variables. Cut to the chase and go straight to XGBoost / Random Forest
+- Look at variable importance and design the affect of geospatial information
+
+### Final Models
+
+I decided to choose ______ in the end as it _____. This gave a test accuracy of ___. I believe ....
+
+## 7. Discussion
+
+### Implications
+
+Once the models have been trained and evaluated, I will select the best performing model and use it to make flight delay predictions. These predictions can be used by airlines to proactively adjust their schedules and minimize the impact of weather-related delays on their operations.
+
+Overall, this analytical plan aims to explore the relationship between weather data and flight delays and to build models that can accurately predict these delays. By doing so, we can help airlines improve their operations and provide a better experience for passengers.
+
+### General Strengths and Weaknesses of Data
+
+Strengths
+- LOTS of data from presumably ALL flights
+- Able to get relatively comprehensive weather data
+
+Weaknesses
+- Missing october data
+- 1% of flights are weather delayed
+- How the data was labelled - how much can we believe that weather delays were caused completely by weather? High correlation between weather delay time and other delay times
+- Do earlier weather delay flights make the current flight "weather delayed" as opposed to "operational delay"?
+- 15 minutes+ = Is just a rule of thumb 
+- ONLY US data
+
 Other things to note are that small planes are more affected by bad weather compared to larger planes. This will affect the likelihood that the flight is delayed for weather reasons. The simplest way to model this is by adding route length into the model, as this is highly correlated with plane size. Then, we can determine how important it is at predicting weather delays. Lastly, I plan to normalize my numerical data in the next modeling iteration of XGBoost, as it will improve the convergence of the algorithm and prevent it from being dominated by variables with larger magnitudes, such as pressure.
+
+### General Strengths and Weaknesses of Modelling
+
+Strengths
+- Relatively simple model architectures
+- Only really need to normalise as a preprocessing technique (which needs to ensure not information leakage)
+- Don't have distribution assumptions
+- Able to make some sort of inference i.e variable important, categorical vs numeric weather data
+- Important features
+
+Weaknesses
+- Change in model performance if applied to the original data.
+- Bias on certain locations/times
+- Influence from other factors such as airport location, carrier, aircraft type...
 
 \pagebreak
 ## 7. Appendix
@@ -719,8 +777,4 @@ class WeatherMiner:
             return {}
 ```
 
-~Information Bank~
-
-Once the models have been trained and evaluated, I will select the best performing model and use it to make flight delay predictions. These predictions can be used by airlines to proactively adjust their schedules and minimize the impact of weather-related delays on their operations.
-
-Overall, this analytical plan aims to explore the relationship between weather data and flight delays and to build models that can accurately predict these delays. By doing so, we can help airlines improve their operations and provide a better experience for passengers.
+wank bank

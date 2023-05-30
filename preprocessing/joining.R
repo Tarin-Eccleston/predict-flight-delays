@@ -5,7 +5,6 @@ library(tidyverse)
 flights_df = read.csv("data/input/flights.csv")
 airlines_df = read.csv("data/input/airlines.csv")
 airports_df = read.csv("data/input/airports.csv")
-cancellation_codes_df = read.csv("data/input/cancellation_codes.csv")
 
 flights_processed_df = data.frame(flights_df)
 
@@ -23,12 +22,6 @@ flights_processed_df = flights_processed_df %>%
 
 # combine airline code and flight number together
 flights_processed_df$FLIGHT_NUMBER = paste0(flights_processed_df$AIRLINE_CODE, flights_processed_df$FLIGHT_NUMBER)
-
-# replace cancellation reason with cancellation description
-flights_processed_df = flights_processed_df %>%
-  left_join(cancellation_codes_df, by = "CANCELLATION_REASON", copy = FALSE, keep = NULL) %>%
-  relocate("CANCELLATION_DESCRIPTION", .after = "CANCELLATION_REASON") %>%
-  select(-CANCELLATION_REASON)
 
 # join flights and airports data to get airport names, city, state and coordinate data for arrival and departure
 colnames(flights_processed_df)[9] = "ORIGIN_AIRPORT_CODE"
@@ -48,6 +41,10 @@ flights_processed_df = flights_processed_df %>%
   rename_with(~ paste0("DESTINATION_", .), colnames(airports_df)[2:7]) %>%
   relocate(paste0("DESTINATION_", colnames(airports_df)[2:7]), .after = "DESTINATION_AIRPORT_CODE")
 
+# remove cancellation information since we have very few examples and are only focused on delays
+flights_processed_df = flights_processed_df %>%
+  select(-c("CANCELLED", "CANCELLATION_REASON"))
+
 # save whole data for exploratory analysis
-save(flights_processed_df, file = "data/output/cleaning/flights_joined.RData")
-write.table(flights_processed_df, file = "data/output/cleaning/flights_joined.csv", sep = ",", row.names = FALSE)
+save(flights_processed_df, file = "data/intermediate/cleaning/flights_joined.RData")
+
