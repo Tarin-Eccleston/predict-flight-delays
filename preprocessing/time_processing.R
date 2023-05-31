@@ -42,23 +42,26 @@ convert_time <- function(time) {
 }
 
 # convert all hour times to HH:MM format
-# note: ignore effect of changing timezones and days for now
 flights_processed_df = flights_processed_df %>%
   mutate(SCHEDULED_DEPARTURE = sapply(SCHEDULED_DEPARTURE, convert_time)) %>%
   mutate(DEPARTURE_TIME = sapply(DEPARTURE_TIME, convert_time)) %>%
   mutate(SCHEDULED_ARRIVAL = sapply(SCHEDULED_ARRIVAL, convert_time))
 
-# convert to local time
+
 flights_processed_df = flights_processed_df %>%
-  mutate(FLIGHT_DATETIME = as.POSIXct(paste(YEAR, MONTH, DAY), format = "%Y %m %d", tz = toString(ORIGIN_TIMEZONE))) %>%
+  mutate(FLIGHT_DATETIME = as.POSIXct(paste(YEAR, MONTH, DAY), format = "%Y %m %d")) %>%
   relocate(FLIGHT_DATETIME, .before = "YEAR") %>%
   select(-c("YEAR", "MONTH", "DAY")) %>%
-  mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(FLIGHT_DATETIME, SCHEDULED_DEPARTURE), format = "%Y-%m-%d %H:%M", tz = timezone)) %>%
+  mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(FLIGHT_DATETIME, SCHEDULED_DEPARTURE), format = "%Y-%m-%d %H:%M")) %>%
   relocate(SCHEDULED_DEPARTURE_DATETIME, .after = SCHEDULED_DEPARTURE)
+
+# convert to local time by using timezone information
+flights_processed_df = flights_processed_df %>%
+  mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(SCHEDULED_DEPARTURE_DATETIME, tz = toString(ORIGIN_TIMEZONE)))
 
 # convert miles to km
 flights_processed_df = flights_processed_df %>%
-  mutate(distance = distance * 1.60934)
+  mutate(DISTANCE = DISTANCE * 1.60934)
 
 # create index for each flight
 flights_processed_df = flights_processed_df %>%
@@ -66,5 +69,5 @@ flights_processed_df = flights_processed_df %>%
   relocate(INDEX, .before = "FLIGHT_DATETIME")
 
 # save whole data for exploratory analysis
-save(flights_processed_df, file = "data/output/cleaning/flights_time_cleaned.RData")
+save(flights_processed_df, file = "data/intermediate/cleaning/flights_time_cleaned.RData")
 
