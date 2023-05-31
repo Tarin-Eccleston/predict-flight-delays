@@ -20,7 +20,7 @@ flights_processed_df["OTHER_DELAY"][is.na(flights_processed_df["OTHER_DELAY"])] 
 flights_processed_df["WEATHER_DELAY"][is.na(flights_processed_df["WEATHER_DELAY"])] = 0
 flights_processed_df["IS_OTHER_DELAY"][is.na(flights_processed_df["IS_OTHER_DELAY"])] = 0
 flights_processed_df["IS_WEATHER_DELAY"][is.na(flights_processed_df["IS_WEATHER_DELAY"])] = 0
-x
+
 # convert numbers to string days of week
 day_names = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 # Map day names to day numbers
@@ -45,7 +45,8 @@ convert_time <- function(time) {
 # note: ignore effect of changing timezones and days for now
 flights_processed_df = flights_processed_df %>%
   mutate(SCHEDULED_DEPARTURE = sapply(SCHEDULED_DEPARTURE, convert_time)) %>%
-  mutate(DEPARTURE_TIME = sapply(DEPARTURE_TIME, convert_time))
+  mutate(DEPARTURE_TIME = sapply(DEPARTURE_TIME, convert_time)) %>%
+  mutate(DEPARTURE_TIME = sapply(SCHEDULED_ARRIVAL, convert_time))
 
 flights_processed_df = flights_processed_df %>%
   mutate(FLIGHT_DATETIME = as.POSIXct(paste(YEAR, MONTH, DAY), format = "%Y %m %d")) %>%
@@ -53,7 +54,6 @@ flights_processed_df = flights_processed_df %>%
   select(-c("YEAR", "MONTH", "DAY")) %>%
   mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(FLIGHT_DATETIME, SCHEDULED_DEPARTURE), format = "%Y-%m-%d %H:%M")) %>%
   relocate(SCHEDULED_DEPARTURE_DATETIME, .after = SCHEDULED_DEPARTURE) %>%
-  mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(FLIGHT_DATETIME, SCHEDULED_DEPARTURE), format = "%Y-%m-%d %H:%M")) %>%
   mutate(DEPARTURE_DATETIME = SCHEDULED_DEPARTURE_DATETIME + 60 * DEPARTURE_DELAY) %>%
   relocate(DEPARTURE_DATETIME, .after = DEPARTURE_TIME)
 
@@ -64,5 +64,4 @@ flights_processed_df = flights_processed_df %>%
 
 # save whole data for exploratory analysis
 save(flights_processed_df, file = "data/output/cleaning/flights_time_cleaned.RData")
-write.table(flights_processed_df, file = "data/intermediate//flights_time_cleaned.csv", sep = ",", row.names = FALSE)
 

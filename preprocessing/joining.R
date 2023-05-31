@@ -10,7 +10,7 @@ flights_processed_df = data.frame(flights_df)
 
 # remove columns which won't be useful for our prediction
 flights_processed_df = flights_processed_df %>%
-  select(-c("TAXI_OUT", "WHEELS_OFF", "SCHEDULED_TIME", "ELAPSED_TIME", "AIR_TIME", "DISTANCE", "WHEELS_ON", "TAXI_IN", "SCHEDULED_ARRIVAL", "ARRIVAL_TIME", "ARRIVAL_DELAY", "DIVERTED"))
+  select(-c("TAXI_OUT", "WHEELS_OFF", "ELAPSED_TIME", "AIR_TIME", "WHEELS_ON", "TAXI_IN", "ARRIVAL_TIME", "ARRIVAL_DELAY", "DIVERTED"))
 
 # join dataframes, use inner join for important information such as airline, departure and arrival airport
 # join flights and airline carrier data
