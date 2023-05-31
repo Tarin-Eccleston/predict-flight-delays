@@ -4,3 +4,4 @@ library(ggplot2)
 
 # read data
 load("data/intermediate/cleaning/flights_time_cleaned.RData")
+

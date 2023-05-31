@@ -338,6 +338,7 @@ Weaknesses
 - Change in model performance if applied to the original data.
 - Bias on certain locations/times
 - Influence from other factors such as airport location, carrier, aircraft type...
+- Didn't factor in taxi out and taxi in which causes errors in timing
 
 \pagebreak
 ## 7. Appendix

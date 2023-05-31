@@ -1,12 +1,37 @@
 setwd("/Users/tarineccleston/Documents/Software-DS/predict-flight-delays")
 library(tidyverse)
+library(timezonefinder)
 
 # read data
 flights_df = read.csv("data/input/flights.csv")
 airlines_df = read.csv("data/input/airlines.csv")
 airports_df = read.csv("data/input/airports.csv")
 
+# note: some states and multiple timezones, so I chose the most predominant ones
+state_timezone_df <- data.frame(
+  STATE = c(
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", 
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", 
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", 
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+  ),
+  TIMEZONE = c(
+    "CST", "AKST", "MST", "CST", "PST", "MST", "EST", "EST", "EST", "EST", 
+    "HST", "MST", "CST", "EST", "CST", "CST", "EST", "CST", "EST", "EST", 
+    "EST", "EST", "CST", "CST", "CST", "MST", "CST", "PST", "EST", "EST", 
+    "MST", "EST", "EST", "CST", "EST", "CST", "PST", "EST", "EST", "EST", 
+    "CST", "EST", "CST", "MST", "EST", "EST", "PST", "EST", "CST", "MST"
+  ),
+  stringsAsFactors = FALSE
+)
+
+
 flights_processed_df = data.frame(flights_df)
+
+airports_df = airports_df %>%
+  inner_join(state_timezone_df, by = "STATE", keep = NULL) %>%
+  relocate("TIMEZONE", .after = "COUNTRY")
 
 # remove columns which won't be useful for our prediction
 flights_processed_df = flights_processed_df %>%
