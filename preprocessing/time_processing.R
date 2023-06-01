@@ -27,6 +27,18 @@ day_names = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
 flights_processed_df = flights_processed_df %>% 
   mutate(DAY_OF_WEEK = day_names[DAY_OF_WEEK])
 
+# convert miles to km
+flights_processed_df = flights_processed_df %>%
+  mutate(DISTANCE = DISTANCE * 1.60934)
+
+# create index for each flight
+flights_processed_df = flights_processed_df %>%
+  mutate(INDEX = row.names(flights_processed_df)) %>%
+  relocate(INDEX, .before = "YEAR")
+
+# save whole data for exploratory analysis
+save(flights_processed_df, file = "data/intermediate/cleaning/flights_time_cleaned.RData")
+
 convert_time <- function(time) {
   if (is.na(time)) {
     return(NA)
@@ -54,15 +66,5 @@ flights_processed_df = flights_processed_df %>%
   mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(FLIGHT_DATETIME, SCHEDULED_DEPARTURE), format = "%Y-%m-%d %H:%M")) %>%
   relocate(SCHEDULED_DEPARTURE_DATETIME, .after = SCHEDULED_DEPARTURE)
 
-# convert miles to km
-flights_processed_df = flights_processed_df %>%
-  mutate(DISTANCE = DISTANCE * 1.60934)
-
-# create index for each flight
-flights_processed_df = flights_processed_df %>%
-  mutate(INDEX = row.names(flights_processed_df)) %>%
-  relocate(INDEX, .before = "FLIGHT_DATETIME")
-
-# save whole data for exploratory analysis
-save(flights_processed_df, file = "data/intermediate/cleaning/flights_time_cleaned.RData")
+save(flights_processed_df, file = "data/intermediate/cleaning/flights_time_cleaned_analysis.RData")
 
