@@ -1,6 +1,7 @@
 setwd("/Users/tarineccleston/Documents/Software-DS/predict-flight-delays")
 library(tidyverse)
 library(ggplot2)
+library(geosphere)
 
 # read data
 load("data/intermediate/cleaning/flights_time_cleaned.RData")
@@ -43,9 +44,25 @@ flights_subset_df = rbind(flights_subset_weather_delay_df, flights_subset_non_we
 # shuffle data
 flights_subset_df <- flights_subset_df[sample(nrow(flights_subset_df)), ]
 
-# now add location and timestamp information for 2 other locations along the flight path
-
+# now add location and timestamp information for 2 other locations 50km and 100km along the flight path
 # convert datetime to timestamp
 flights_subset_df = flights_subset_df %>%
   mutate(SCHEDULED_DEPARTURE_TIMESTAMP = as.numeric(SCHEDULED_DEPARTURE_DATETIME)) %>%
   relocate(SCHEDULED_DEPARTURE_TIMESTAMP, .after = SCHEDULED_DEPARTURE_DATETIME)
+
+# fun functions
+get_flight_path_coordinates = function(origin_latitude, origin_longitude, distance, bearing) {
+  destination <- distVincentySphere(c(longitude, latitude), distance, bearing)
+  return(destination)
+}
+
+get_bearings = function(origin_latitude, origin_longitude, destination_latitude, destination_longitude) {
+  bearing = bearingRhumb(c(origin_longitude, origin_latitude), c(destination_longitude, destination_latitude))
+  return(bearing)
+}
+
+
+
+
+
+
