@@ -47,9 +47,10 @@ flights_subset_df = rbind(flights_subset_weather_delay_df, flights_subset_non_we
 flights_subset_df <- flights_subset_df[sample(nrow(flights_subset_df)), ]
 
 # add location and timestamp information for 2 other locations 50km and 100km along the flight path
+
 # convert to local time to UNIX timestamp by using timezone information
 flights_subset_df = flights_subset_df %>%
-  mutate(SCHEDULED_DEPARTURE_TIMESTAMP = as.numeric(as.POSIXct(SCHEDULED_DEPARTURE_DATETIME))) %>%
+  mutate(SCHEDULED_DEPARTURE_TIMESTAMP = as.numeric(as.POSIXct(SCHEDULED_DEPARTURE_DATETIME, tz = toString(ORIGIN_TIMEZONE)))) %>%
   relocate(SCHEDULED_DEPARTURE_TIMESTAMP, .after = SCHEDULED_DEPARTURE_DATETIME)
 
 for (i in 1:1000) {

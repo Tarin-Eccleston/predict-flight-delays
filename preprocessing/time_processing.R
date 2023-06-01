@@ -51,7 +51,7 @@ flights_processed_df = flights_processed_df %>%
   mutate(FLIGHT_DATETIME = as.POSIXct(paste(YEAR, MONTH, DAY), format = "%Y %m %d")) %>%
   relocate(FLIGHT_DATETIME, .before = "YEAR") %>%
   select(-c("YEAR", "MONTH", "DAY")) %>%
-  mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(FLIGHT_DATETIME, SCHEDULED_DEPARTURE), format = "%Y-%m-%d %H:%M", tz = ORIGIN_TIMEZONE)) %>%
+  mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(FLIGHT_DATETIME, SCHEDULED_DEPARTURE), format = "%Y-%m-%d %H:%M")) %>%
   relocate(SCHEDULED_DEPARTURE_DATETIME, .after = SCHEDULED_DEPARTURE)
 
 # convert miles to km

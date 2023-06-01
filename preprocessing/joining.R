@@ -65,8 +65,9 @@ flights_processed_df = flights_processed_df %>%
   rename_with(~ paste0("DESTINATION_", .), colnames(airports_df)[2:8]) %>%
   relocate(paste0("DESTINATION_", colnames(airports_df)[2:8]), .after = "DESTINATION_AIRPORT_CODE")
 
-# remove cancellation information since we have very few examples and are only focused on delays
+# remove cancelled flights and cancellation information since we have very few examples and are only focused on delays
 flights_processed_df = flights_processed_df %>%
+  filter(CANCELLED == 0) %>%
   select(-c("CANCELLED", "CANCELLATION_REASON"))
 
 # save whole data for exploratory analysis
