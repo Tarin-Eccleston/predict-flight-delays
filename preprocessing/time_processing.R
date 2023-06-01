@@ -51,12 +51,8 @@ flights_processed_df = flights_processed_df %>%
   mutate(FLIGHT_DATETIME = as.POSIXct(paste(YEAR, MONTH, DAY), format = "%Y %m %d")) %>%
   relocate(FLIGHT_DATETIME, .before = "YEAR") %>%
   select(-c("YEAR", "MONTH", "DAY")) %>%
-  mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(FLIGHT_DATETIME, SCHEDULED_DEPARTURE), format = "%Y-%m-%d %H:%M")) %>%
+  mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(FLIGHT_DATETIME, SCHEDULED_DEPARTURE), format = "%Y-%m-%d %H:%M", tz = ORIGIN_TIMEZONE)) %>%
   relocate(SCHEDULED_DEPARTURE_DATETIME, .after = SCHEDULED_DEPARTURE)
-
-# convert to local time by using timezone information
-flights_processed_df = flights_processed_df %>%
-  mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(SCHEDULED_DEPARTURE_DATETIME, tz = toString(ORIGIN_TIMEZONE)))
 
 # convert miles to km
 flights_processed_df = flights_processed_df %>%

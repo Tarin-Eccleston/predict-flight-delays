@@ -17,11 +17,11 @@ state_timezone_df <- data.frame(
     "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
   ),
   TIMEZONE = c(
-    "CST", "AKST", "MST", "CST", "PST", "MST", "EST", "EST", "EST", "EST", 
-    "HST", "MST", "CST", "EST", "CST", "CST", "EST", "CST", "EST", "EST", 
-    "EST", "EST", "CST", "CST", "CST", "MST", "CST", "PST", "EST", "EST", 
-    "MST", "EST", "EST", "CST", "EST", "CST", "PST", "EST", "EST", "EST", 
-    "CST", "EST", "CST", "MST", "EST", "EST", "PST", "EST", "CST", "MST"
+    "US/Central", "America/Anchorage", "US/Mountain", "US/Central", "US/Pacific", "US/Mountain", "US/Eastern", "US/Eastern", "US/Eastern", "US/Eastern", 
+    "Pacific/Honolulu", "US/Mountain", "US/Central", "US/Eastern", "US/Central", "US/Central", "US/Eastern", "US/Central", "US/Eastern", "US/Eastern", 
+    "US/Eastern", "US/Eastern", "US/Central", "US/Central", "US/Central", "US/Mountain", "US/Central", "US/Pacific", "US/Eastern", "US/Eastern", 
+    "US/Mountain", "US/Eastern", "US/Eastern", "US/Central", "US/Eastern", "US/Central", "US/Pacific", "US/Eastern", "US/Eastern", "US/Eastern", 
+    "US/Central", "US/Eastern", "US/Central", "US/Mountain", "US/Eastern", "US/Eastern", "US/Pacific", "US/Eastern", "US/Central", "US/Mountain"
   ),
   stringsAsFactors = FALSE
 )
