@@ -66,6 +66,7 @@ flights_subset_df = flights_subset_df %>%
   mutate(DEPARTURE_TIME = sapply(DEPARTURE_TIME, convert_time)) %>%
   mutate(SCHEDULED_ARRIVAL = sapply(SCHEDULED_ARRIVAL, convert_time))
 
+# Note: there is an issue with the tz.. it appears that we need to add in the timezone manually. Reverts to UTC if we use timezone from the dataframe
 flights_subset_df = flights_subset_df %>%
   mutate(FLIGHT_DATETIME = as.POSIXct(paste(YEAR, MONTH, DAY), format = "%Y %m %d")) %>%
   relocate(FLIGHT_DATETIME, .before = "YEAR") %>%
@@ -99,6 +100,7 @@ flights_subset_df = flights_subset_df %>%
   relocate(SCHEDULED_50KM_TIMESTAMP, .after = LONGITUDE_50KM) %>%
   relocate(SCHEDULED_100KM_TIMESTAMP, .after = LONGITUDE_100KM)
 
-
+save(flights_subset_df, file = "data/intermediate/cleaning/flights_spatial_subset.RData")
+write.csv(flights_subset_df, "data/intermediate/cleaning/flights_spatial_subset.csv", row.names = FALSE)
 
 
