@@ -47,7 +47,6 @@ flights_processed_df = flights_processed_df %>%
   mutate(DEPARTURE_TIME = sapply(DEPARTURE_TIME, convert_time)) %>%
   mutate(SCHEDULED_ARRIVAL = sapply(SCHEDULED_ARRIVAL, convert_time))
 
-
 flights_processed_df = flights_processed_df %>%
   mutate(FLIGHT_DATETIME = as.POSIXct(paste(YEAR, MONTH, DAY), format = "%Y %m %d")) %>%
   relocate(FLIGHT_DATETIME, .before = "YEAR") %>%

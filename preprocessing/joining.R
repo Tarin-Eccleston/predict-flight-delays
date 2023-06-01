@@ -26,7 +26,6 @@ state_timezone_df <- data.frame(
   stringsAsFactors = FALSE
 )
 
-
 flights_processed_df = data.frame(flights_df)
 
 airports_df = airports_df %>%
@@ -56,15 +55,15 @@ colnames(flights_processed_df)[10] = "DESTINATION_AIRPORT_CODE"
 colnames(airports_df)[1] = "ORIGIN_AIRPORT_CODE"
 flights_processed_df = flights_processed_df %>%
   inner_join(airports_df, by = "ORIGIN_AIRPORT_CODE", copy = FALSE, keep = NULL) %>%
-  rename_with(~ paste0("ORIGIN_", .), colnames(airports_df)[2:7]) %>%
-  relocate(paste0("ORIGIN_", colnames(airports_df)[2:7]), .after = "ORIGIN_AIRPORT_CODE")
+  rename_with(~ paste0("ORIGIN_", .), colnames(airports_df)[2:8]) %>%
+  relocate(paste0("ORIGIN_", colnames(airports_df)[2:8]), .after = "ORIGIN_AIRPORT_CODE")
 
 # for destination airports
 colnames(airports_df)[1] = "DESTINATION_AIRPORT_CODE"
 flights_processed_df = flights_processed_df %>%
   inner_join(airports_df, by = "DESTINATION_AIRPORT_CODE", copy = FALSE, keep = NULL) %>%
-  rename_with(~ paste0("DESTINATION_", .), colnames(airports_df)[2:7]) %>%
-  relocate(paste0("DESTINATION_", colnames(airports_df)[2:7]), .after = "DESTINATION_AIRPORT_CODE")
+  rename_with(~ paste0("DESTINATION_", .), colnames(airports_df)[2:8]) %>%
+  relocate(paste0("DESTINATION_", colnames(airports_df)[2:8]), .after = "DESTINATION_AIRPORT_CODE")
 
 # remove cancellation information since we have very few examples and are only focused on delays
 flights_processed_df = flights_processed_df %>%

@@ -322,6 +322,7 @@ Weaknesses
 - Do earlier weather delay flights make the current flight "weather delayed" as opposed to "operational delay"?
 - 15 minutes+ = Is just a rule of thumb 
 - ONLY US data
+- incorrect timestamps for openweather api
 
 Other things to note are that small planes are more affected by bad weather compared to larger planes. This will affect the likelihood that the flight is delayed for weather reasons. The simplest way to model this is by adding route length into the model, as this is highly correlated with plane size. Then, we can determine how important it is at predicting weather delays. Lastly, I plan to normalize my numerical data in the next modeling iteration of XGBoost, as it will improve the convergence of the algorithm and prevent it from being dominated by variables with larger magnitudes, such as pressure.
 
