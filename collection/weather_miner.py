@@ -3,16 +3,14 @@ import datetime
 import random
 import json
 
-import airportsdata
-
 class WeatherMiner:
     def __init__(self, username, api_key):
         self.username = username
         self.api_key = api_key
         self.units = "metric"
         
-    def get_weather_event(self, airport_coord_lat, airport_coord_lon, timestamp):
-        response = requests.get(f"https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={airport_coord_lat}&lon={airport_coord_lon}&dt={timestamp}&appid={self.api_key}&units={self.units}")
+    def get_weather_event(self, coord_lat, coord_lon, timestamp):
+        response = requests.get(f"https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={coord_lat}&lon={coord_lon}&dt={timestamp}&appid={self.api_key}&units={self.units}")
         if response.status_code == 200:
             weather_event_raw = response.json()
 

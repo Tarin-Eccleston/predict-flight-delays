@@ -102,5 +102,3 @@ flights_subset_df = flights_subset_df %>%
 
 save(flights_subset_df, file = "data/intermediate/cleaning/flights_spatial_subset.RData")
 write.csv(flights_subset_df, "data/intermediate/cleaning/flights_spatial_subset.csv", row.names = FALSE)
-
-
