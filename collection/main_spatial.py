@@ -20,10 +20,10 @@ def main():
     lat_selector = ["ORIGIN_LATITUDE", "LATITUDE_50KM", "LATITUDE_100KM"]
     lon_selector = ["ORIGIN_LONGITUDE", "LONGITUDE_50KM", "LONGITUDE_100KM"]
     timestamp_selector = ["SCHEDULED_DEPARTURE_TIMESTAMP", "SCHEDULED_50KM_TIMESTAMP", "SCHEDULED_100KM_TIMESTAMP"]
-    prefixes = ["origin_", "50km_", "100km_"]
+    suffixes = ["_origin", "_50km", "_100km"]
 
     batch_size = 100
-    batch_number = 10
+    batch_number = 1
 
     complete = False
 
@@ -52,11 +52,11 @@ def main():
                     lat = flights_df.loc[instance_number,lat_selector[call_number]]
                     lon = flights_df.loc[instance_number,lon_selector[call_number]]
                     timestamp = int(flights_df.loc[instance_number,timestamp_selector[call_number]].round())
-                    prefix = prefixes[call_number]
+                    suffix = suffixes[call_number]
 
                     weather_event = weather_miner.get_weather_event(lat, lon, timestamp)
                     weather_event = pd.DataFrame([weather_event])
-                    weather_event = weather_event.add_prefix(prefix)
+                    weather_event = weather_event.add_suffix(suffix)
                     weather_events = pd.concat([weather_events, weather_event], axis=1)
                 end = time.time()
 
