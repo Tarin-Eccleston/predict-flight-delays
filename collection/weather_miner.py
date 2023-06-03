@@ -21,10 +21,10 @@ class WeatherMiner:
                 "clouds": weather_event_raw["data"][0].get("clouds"),
                 "visibility": weather_event_raw["data"][0].get("visibility"),
                 "wind_speed": weather_event_raw["data"][0].get("wind_speed"),
-                "rainfall_1hr": weather_event_raw["data"][0].get("rain", {}).get("1h"),
-                "rainfall_3hr": weather_event_raw["data"][0].get("rain", {}).get("3h"),
-                "snowfall_1hr": weather_event_raw["data"][0].get("snow", {}).get("1h"),  
-                "snowfall_3hr": weather_event_raw["data"][0].get("snow", {}).get("3h"),  
+                "rainfall_1hr": weather_event_raw["data"][0].get("rain", {}).get("1h", 0),
+                "rainfall_3hr": weather_event_raw["data"][0].get("rain", {}).get("3h", 0),
+                "snowfall_1hr": weather_event_raw["data"][0].get("snow", {}).get("1h", 0),  
+                "snowfall_3hr": weather_event_raw["data"][0].get("snow", {}).get("3h", 0),  
             }
             return weather_event
         else:

@@ -48,15 +48,21 @@ def main():
                     break
 
                 start = time.time()
-                for call_number in range(0,2):
+                for call_number in range(0,3):
                     lat = flights_df.loc[instance_number,lat_selector[call_number]]
                     lon = flights_df.loc[instance_number,lon_selector[call_number]]
-                    timestamp = flights_df.loc[instance_number,timestamp_selector[call_number]]
-                    prefix = prefixes.loc[call_number]
+                    timestamp = int(flights_df.loc[instance_number,timestamp_selector[call_number]].round())
+                    prefix = prefixes[call_number]
+
+                    print(prefix)
+                    print(lat)
+                    print(lon)
+                    print(timestamp)
 
                     weather_event = weather_miner.get_weather_event(lat, lon, timestamp)
                     weather_event = pd.DataFrame([weather_event])
                     weather_event = weather_event.add_prefix(prefix)
+                    print(weather_event)
                     weather_events = pd.concat([weather_events, weather_event], axis=1)
                 end = time.time()
 
@@ -70,7 +76,7 @@ def main():
                 # add each event to the overall events dataframe
                 weather_events_batch = pd.concat([weather_events_batch, weather_events], ignore_index=True)
 
-            weather_events_batch.to_csv('data/intermediate/weather_sample_2/weather_data_samples_' + str(sample_range_lower) + "-" + str(sample_range_upper) + '.csv', index=False)
+            weather_events_batch.to_csv('data/intermediate/weather_sample_3/weather_data_samples_' + str(sample_range_lower) + "-" + str(sample_range_upper) + '.csv', index=False)
         
         batch_number = batch_number + 1
 
