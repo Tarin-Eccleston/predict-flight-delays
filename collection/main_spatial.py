@@ -20,10 +20,10 @@ def main():
     lat_selector = ["ORIGIN_LATITUDE", "LATITUDE_50KM", "LATITUDE_100KM"]
     lon_selector = ["ORIGIN_LONGITUDE", "LONGITUDE_50KM", "LONGITUDE_100KM"]
     timestamp_selector = ["SCHEDULED_DEPARTURE_TIMESTAMP", "SCHEDULED_50KM_TIMESTAMP", "SCHEDULED_100KM_TIMESTAMP"]
-    prefixes = ["ORIGIN_", "50KM_", "100KM_"]
+    prefixes = ["origin_", "50km_", "100km_"]
 
-    batch_size = 10
-    batch_number = 1
+    batch_size = 100
+    batch_number = 10
 
     complete = False
 
@@ -36,7 +36,7 @@ def main():
         sample_range_upper = (batch_number-1)*batch_size+(batch_size-1)
 
         # only get weather data which we don't have
-        if (~os.path.isfile('data/output/weather/weather_data_samples_' + str(sample_range_lower) + "-" + str(sample_range_upper) + '.csv')):
+        if (~os.path.isfile('data/intermediate/weather_sample_3/weather_data_samples_' + str(sample_range_lower) + "-" + str(sample_range_upper) + '.csv')):
             # gather weather data as rows and continuously append
             for instance_number in range(sample_range_lower, sample_range_upper + 1):
                 # reset weather events dataframe
@@ -54,15 +54,9 @@ def main():
                     timestamp = int(flights_df.loc[instance_number,timestamp_selector[call_number]].round())
                     prefix = prefixes[call_number]
 
-                    print(prefix)
-                    print(lat)
-                    print(lon)
-                    print(timestamp)
-
                     weather_event = weather_miner.get_weather_event(lat, lon, timestamp)
                     weather_event = pd.DataFrame([weather_event])
                     weather_event = weather_event.add_prefix(prefix)
-                    print(weather_event)
                     weather_events = pd.concat([weather_events, weather_event], axis=1)
                 end = time.time()
 
@@ -79,7 +73,6 @@ def main():
             weather_events_batch.to_csv('data/intermediate/weather_sample_3/weather_data_samples_' + str(sample_range_lower) + "-" + str(sample_range_upper) + '.csv', index=False)
         
         batch_number = batch_number + 1
-
 
 if __name__ == "__main__": {
     main()
