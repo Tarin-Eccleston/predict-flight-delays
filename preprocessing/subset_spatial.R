@@ -88,10 +88,10 @@ for (i in 1:1000) {
 }
 
 for (i in 1:1000) {
-  flights_subset_df$LATITUDE_50KM[i] = destPoint(c(flights_subset_df$ORIGIN_LONGITUDE[i], flights_subset_df$ORIGIN_LATITUDE[i]), flights_subset_df$FLIGHT_BEARING[i], 50 * 100)[2]
-  flights_subset_df$LONGITUDE_50KM[i] = destPoint(c(flights_subset_df$ORIGIN_LONGITUDE[i], flights_subset_df$ORIGIN_LATITUDE[i]), flights_subset_df$FLIGHT_BEARING[i], 50 * 100)[1]
-  flights_subset_df$LATITUDE_100KM[i] = destPoint(c(flights_subset_df$ORIGIN_LONGITUDE[i], flights_subset_df$ORIGIN_LATITUDE[i]), flights_subset_df$FLIGHT_BEARING[i], 100 * 100)[2]
-  flights_subset_df$LONGITUDE_100KM[i] = destPoint(c(flights_subset_df$ORIGIN_LONGITUDE[i], flights_subset_df$ORIGIN_LATITUDE[i]), flights_subset_df$FLIGHT_BEARING[i], 100 * 100)[1]
+  flights_subset_df$LATITUDE_50KM[i] = destPoint(c(flights_subset_df$ORIGIN_LONGITUDE[i], flights_subset_df$ORIGIN_LATITUDE[i]), flights_subset_df$FLIGHT_BEARING[i], 50 * 1000)[2]
+  flights_subset_df$LONGITUDE_50KM[i] = destPoint(c(flights_subset_df$ORIGIN_LONGITUDE[i], flights_subset_df$ORIGIN_LATITUDE[i]), flights_subset_df$FLIGHT_BEARING[i], 50 * 1000)[1]
+  flights_subset_df$LATITUDE_100KM[i] = destPoint(c(flights_subset_df$ORIGIN_LONGITUDE[i], flights_subset_df$ORIGIN_LATITUDE[i]), flights_subset_df$FLIGHT_BEARING[i], 100 * 1000)[2]
+  flights_subset_df$LONGITUDE_100KM[i] = destPoint(c(flights_subset_df$ORIGIN_LONGITUDE[i], flights_subset_df$ORIGIN_LATITUDE[i]), flights_subset_df$FLIGHT_BEARING[i], 100 * 1000)[1]
 }
 
 flights_subset_df = flights_subset_df %>%
