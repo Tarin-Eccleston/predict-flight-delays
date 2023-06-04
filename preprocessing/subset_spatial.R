@@ -102,3 +102,25 @@ flights_subset_df = flights_subset_df %>%
 
 save(flights_subset_df, file = "data/intermediate/cleaning/flights_spatial_subset.RData")
 write.csv(flights_subset_df, "data/intermediate/cleaning/flights_spatial_subset.csv", row.names = FALSE)
+
+# __________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+# subset a random number fo 1000 flights in the US for testing on our model
+
+sample_test_size = 1000
+
+flights_test_subset_weather_delay_df = flights_processed_df %>%
+  filter(IS_WEATHER_DELAY == 1) %>%
+  slice_sample(n = sample_test_size/2, replace = FALSE)
+
+flights_test_subset_weather_other_df = flights_processed_df %>%
+  filter(IS_WEATHER_DELAY == 0) %>%
+  slice_sample(n = sample_test_size/2, replace = FALSE)
+
+# combine data
+flights_test_subset_df = rbind(flights_test_subset_weather_delay_df, flights_test_subset_weather_other_df)
+
+# shuffle data
+flights_test_subset_df <- flights_test_subset_df[sample(nrow(flights_test_subset_df)), ]
+
+
+
