@@ -321,13 +321,15 @@ Normalisation was also applied to the all the variables independently between th
 
 ### Initial Modelling
 
-For the initial models, I used both the numerical and categorical weather data. Unsurprisingly, I found that the decision tree model performed the worst, with an accuracy of 76%. I then improved this by using Random Forests, which increased test accuracy to 79%. Adaboost didn't produce particularly great results, with an accuracy of 76%, while XGBoost had the highest accuracy of 79%. In the end, XGBoost seemed to be the best model for this particular dataset as it provides a good balance of accuracy and interpretability. I repeated the above, but only using categorical weather data. The accuracy for all models dropped. I repeated the same steps but only using numerical weather data and found the accuracies and F1 scores to be near identical between the same models which use just numeric weather variables and a combination of numeric and catergorical weather variables.
+For the initial models, I utilized both numerical and categorical weather data in the analysis. As expected, the decision tree model yielded the lowest accuracy, performing at 76%. To enhance the results, I employed Random Forests, which increased the test accuracy to 79%. Adaboost did not deliver significant improvements, with an accuracy of 76%, while XGBoost achieved the highest accuracy of 79%. Considering the balance between accuracy and interpretability, XGBoost emerged as the most suitable model for this specific dataset.
 
-I can infer from this that categorical weather data, such as "heavy rain" or "light snow," doesn't provide much more information to the model, as this is already represented in numerical weather data. Additionally, categorical weather data is often quite inconsistent, as I have observed that some observations might indicate rainfall in cm for the hour, while the categorical data would indicate that it was not raining. I decided to discontinue collecting categorical weather data.
+Subsequently, I conducted a similar analysis exclusively using categorical weather data, which resulted in a drop in accuracy across all models. Likewise, when using only numerical weather data, the accuracies and F1 scores remained nearly identical to the models utilizing both numeric and categorical weather variables.
 
-After some research, I removed the dew point variable from the dataset, as this is redundant since it is mathematically related to temperature and humidity. This resulted in an increase in accuracy to 0.5% for all models. 
+From these observations, it can be inferred that categorical weather data, such as descriptors like "heavy rain" or "light snow," does not provide substantial additional information to the models since such information is already captured in the numerical weather data. Moreover, categorical weather data often exhibits inconsistencies, as I noted instances where observations indicated measurable rainfall in centimeters for an hour, while the categorical data classified it as non-rainy. Consequently, I made the decision to discontinue collecting categorical weather data.
 
-The overall performance of the model is quite reasonable with XGBoost having the best accuracy of 79%. This is only 30% better than guessing at random on our test set. The model is still useful though, as we can use model comparisons and important features to learn more about our data. Namely, categorical weather data is redundant or erroneous, and the most important features to distinguish weather-delayed and other flights seem to be temperature, pressure, humidity.
+Further research led me to remove the dew point variable from the dataset due to its redundancy, as it is mathematically related to temperature and humidity. This adjustment resulted in a general increase in accuracy by 0.5% across all models.
+
+Overall, the model's performance is reasonably satisfactory, with XGBoost achieving the highest accuracy of 79%. It is worth noting that this accuracy represents a 30% improvement over random guessing on the test set. Although the model's predictive power is valuable, it also provides insights through model comparisons and identifying important features. Notably, the analysis reveals that categorical weather data is redundant or prone to errors, while the key features for distinguishing weather-delayed and non-delayed flights appear to be temperature, pressure, and humidity.
 
 #### Variable Importance Chart XGBoost (Numerical weather variables only, and removal of dew point)
 
@@ -342,20 +344,21 @@ knitr::include_graphics("../data/images/xgboost_accuracy_f1_score.png")
 knitr::include_graphics("../data/images/xgboost_confusion_matrix.png")
 ```
 
-It is not possible to significantly increase our model accuracy through preprocessing, as the numerical weather data is relatively consistent, reliable, and clean. Gains in model performance can be increased by improving the experimental design. I only collected weather data once for each flight, and that was located exactly at the origin airport. In reality, bad weather along the flight path could also cause weather delays. I plan to collect more weather data along the flight route of each flight and use the combined data for modelling.
+It is not feasible to achieve a substantial increase in model accuracy through preprocessing, as the numerical weather data is already relatively consistent, reliable, and clean. However, there is potential for improving the model's performance by enhancing the experimental design. Currently, I only collected weather data once for each flight, specifically at the origin airport. In reality, weather conditions along the flight path can also contribute to weather delays. To address this limitation, my plan is to collect additional weather data along the flight route for each flight and incorporate this combined data into the modeling process. By incorporating more comprehensive weather information, we aim to enhance the model's ability to capture the impact of weather conditions on flight delays.
 
 ### Multi-modal Modelling
 
-I believe other factors such as geographic location and time ultimately affect the weather conditions of the departure airport for a particular flight. 
-- Try resubset flight data using maybe 3 top airports?
-- Use some math to calculate locations and timestamps (3 total weather samples)
-- Redesign api weather data collection system
-- Remodel, maybe with equal weights across all variables. Cut to the chase and go straight to XGBoost / Random Forest
-- Look at variable importance and design the affect of geospatial information
+I collected numerical weather data from three different locations: the origin airport, 50km along the flight path, and 100km along the flight path, as depicted in the figure below. To assess the impact of using all the weather data versus using the averaged weather data, I compared the performance of different models.
 
-### Final Models
+When using all the weather variables, the accuracies and F1 scores for all models decreased by approximately 10%. This outcome was expected, as including all the variables increased the number of covariates, resulting in sparser data and a higher risk of overfitting. Additionally, there were instances of missing values in the weather data. However, by utilizing the averaged weather data across these three locations, we were able to mitigate the overfitting caused by sparsity. The missing values were handled by disregarding them during the averaging process. As a result, the averaged approach yielded an average increase of 2-3% in both accuracy and F1 score compared to the initial model.
 
-I decided to choose ______ in the end as it _____. This gave a test accuracy of ___. I believe ....
+Among the weather variables, temperature remained the most influential, followed by pressure, humidity, and visibility.
+
+#### Plot of Weather Data Sample locations for each flight path
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7} 
+knitr::include_graphics("../data/images/spatial_data_plot.png")
+```
 
 ## 7. Discussion
 
