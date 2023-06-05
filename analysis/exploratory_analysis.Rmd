@@ -251,15 +251,6 @@ pressure_plot = ggplot(flights_weather_df, aes(x = factor(IS_WEATHER_DELAY), y =
   scale_x_discrete(labels = c("Other Flights", "Weather Delayed Flights")) +
   theme_classic()
 
-temp_vs_pressure_plot = ggplot(flights_weather_df, aes(x = temp, y = pressure, color = factor(IS_WEATHER_DELAY))) +
-  annotate('rect', xmin = 3, xmax = 18, ymin = 980, ymax = 1050, alpha = 0.4, fill = 'green') +
-  geom_point() +
-  scale_color_manual(values = c("black", "red"), 
-                     labels = c("Other Flights", "Weather Delayed Flights")) +
-  stat_smooth(method = "lm", col = "blue") +
-  labs(title = "Comparison of Temperature and Pressure between Weather Delay and Other Flights",
-       x = "Temperature (C)", y = "Pressure (Pa)")
-
 temp_vs_snowfall_plot = ggplot(flights_weather_df, aes(x = temp, y = snowfall_1hr, color = factor(IS_WEATHER_DELAY))) +
   geom_point() +
   scale_color_manual(values = c("black", "red"), 
@@ -305,6 +296,15 @@ pressure_plot
 The most interesting plot is the temperature vs pressure plot, which approximately shows a negative relationship between the two variables. Lower temperatures result in higher pressure, this could explain the source of the delayed flights which have a have higher pressure. Lower temperatures are typically unfavorable for take-offs as it can cause frost/ice buildup on the aircraft and runway. Additionally temperatures over 18C cause lower pressures which which could result and unfavorable weather events such as ____. The area marked in green shows the range of temperatures and pressure striking an ideal balance for conditions for take off.  
 
 ```{r weather_data_humidity_vs_wind_speed, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7}
+temp_vs_pressure_plot = ggplot(flights_weather_df, aes(x = temp, y = pressure, color = factor(IS_WEATHER_DELAY))) +
+  annotate('rect', xmin = 3, xmax = 18, ymin = 980, ymax = 1050, alpha = 0.4, fill = 'green') +
+  geom_point() +
+  scale_color_manual(values = c("black", "red"), 
+                     labels = c("Other Flights", "Weather Delayed Flights")) +
+  stat_smooth(method = "lm", col = "blue") +
+  labs(title = "Comparison of Temperature and Pressure between Weather Delay and Other Flights",
+       x = "Temperature (C)", y = "Pressure (Pa)")
+
 temp_vs_pressure_plot
 ```
 
@@ -312,7 +312,7 @@ temp_vs_pressure_plot
 
 The analytical plan will involve continuing to explore relationships in weather and flight data, and building models to predict if a flight will be delayed due to weather or not. I initially used a subset sample of 1000 flights leaving from O'Harte Chicago Airport with equal balance of weather delayed and other flights for my modelling. Pre-processing techniques such as normalisation and averaging was used to ensure the data is of good quality and format before modelling. 
 
-I started with a decision tree model, and evaluated it's performance. I improved on this by using ensemble techniques such as random forests, adaboost, and XGboost. Hyperparameter tuning was conducted using 10-fold cross-validation for each model, and the best model with the optimum hyperparameters were chosen based on the validation accuracies. I explored a reasonable range of hyper parameters such as max tree depth and learning rate, where there is a trade-off on search comprehensiveness and optimization bias. I then used appropriate criteria metrics such as the confusion matrix, accuracy and F1 score to finally compare different model architectures. I believe the F1 score is a good measure of overall performance of a model as it is the harmonic mean of the precision and recall scores
+I started with a decision tree model, and evaluated it's performance. I improved on this by using ensemble techniques such as random forests, adaboost, and XGboost. Hyperparameter tuning was conducted using 10-fold cross-validation for each model, and the best model with the optimum hyperparameters were chosen based on the validation accuracies. I explored a reasonable range of hyper parameters such as max tree depth and learning rate, where there is a trade-off on search comprehensiveness and optimization bias. I then used appropriate criteria metrics such as the confusion matrix, accuracy and F1 score to finally compare different model architectures. I believe the F1 score is a good measure of overall performance of a model as it is the harmonic mean of the precision and recall scores. Precision measures how well the model predicts positive instances correctly whereas the recall measures how well the model captures positive instances from the entire dataset. A high recall indicates a low number of false negatives.
 
 Normalisation was also applied to the all the variables independently between the training and validation splits to insure no information leakage. Normalizing variables ensures that each feature is on a similar scale. This is important because the chosen machine learning architectures can be sensitive to the relative scales of different variables. When variables have vastly different scales, it can lead to biased learning and an undue influence of variables with larger scales on the model training process.
 
@@ -329,19 +329,20 @@ After some research, I removed the dew point variable from the dataset, as this 
 
 The overall performance of the model is quite reasonable with XGBoost having the best accuracy of 79%. This is only 30% better than guessing at random on our test set. The model is still useful though, as we can use model comparisons and important features to learn more about our data. Namely, categorical weather data is redundant or erroneous, and the most important features to distinguish weather-delayed and other flights seem to be temperature, pressure, humidity.
 
-#### Variable Importance Chart XGBoost Model (Numerical weather variables included, and removal of dew point)
+#### Variable Importance Chart XGBoost (Numerical weather variables only, and removal of dew point)
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7} 
 knitr::include_graphics("../data/images/variable_importance_processed.png")
 ```
 
-#### Accuracy of XGBoost Model (Numerical weather variables included, and removal of dew point)
+#### Accuracy/F1 score of XGBoost Model (Numerical weather variables only, and removal of dew point)
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7} 
-knitr::include_graphics("../data/images/xgboost_accuracy.png")
+knitr::include_graphics("../data/images/xgboost_accuracy_f1_score.png")
+knitr::include_graphics("../data/images/xgboost_confusion_matrix.png")
 ```
 
-It is not possible to significantly increase our model accuracy through preprocessing, as the numerical weather data is relatively consistent, reliable, and clean. Gains in model performance can be increased by improving the experimental design. I only collected weather data once for each flight, and that was located exactly at the origin airport. In reality, bad weather along the flight path could also cause weather delays. I plan to collect more weather data along the flight route of each flight and use that in the next XGBoost model. Collecting more weather data per flight using the OpenWeather API would result in greater cost. Instead, I will minimize my observations and only use flight data from certain airports such as Hartsfield–Jackson Atlanta International Airport, Dallas/Fort Worth International Airport, or John F. Kennedy International Airport.
+It is not possible to significantly increase our model accuracy through preprocessing, as the numerical weather data is relatively consistent, reliable, and clean. Gains in model performance can be increased by improving the experimental design. I only collected weather data once for each flight, and that was located exactly at the origin airport. In reality, bad weather along the flight path could also cause weather delays. I plan to collect more weather data along the flight route of each flight and use the combined data for modelling.
 
 ### Multi-modal Modelling
 
