@@ -1,12 +1,12 @@
 ---
 geometry: left=1.5cm,right=1.5cm,top=1.5cm,bottom=1.5cm
 output:
-  html_document:
-    df_print: paged
   pdf_document:
     pandoc_args: "--quiet"
+  html_document:
+    df_print: paged
 ---
-## Milestone 3 - Predict Flight Delays
+## Milestone 4 - Predict Flight Delays
 ### Author: Tarin Eccleston
 
 ## 1. Goal
@@ -31,7 +31,7 @@ library(ggmap)
 library(cowplot)
 library(maps)
 
-load("../data/intermediate/cleaning/flights_time_cleaned.RData")
+load("../data/intermediate/cleaning/flights_time_cleaned_analysis.RData")
 airports_df = read.csv("../data/input/airports.csv")
 ```
 
@@ -277,25 +277,25 @@ I would like to compare the differences in physical weather measurements between
 
 Weather delayed flights appear to have a multi-modal distribution of temperatures with centers at 24C and -2C, compared to other flights which appears uni-modal and skewed to the left with centrality at 24C. The -2C temperature center for weather delayed flights could be capturing the flight events during blizzards and snowstorms. 
 
-```{r weather_data_temp, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7}
+```{r weather_data_temp, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 2.5, fig.width = 6}
 temp_plot
 ```
 
 Looking at the humidity comparison, weather delayed flights appear to be scheduled during higher humidity compared to other flights. Other flights appear to have a cnetral distribution about 70% humidity, whereas weather delayed flights have a left-skewed distribution, with a median around 90% humidity.
 
-```{r weather_data_humidity, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7}
+```{r weather_data_humidity, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 2.5, fig.width = 6}
 humidity_plot
 ```
 
-*Discussion about low pressure and how it's bad for weather*. Flights which aren't delayed have a clear median of 1013 mbar, with a light right-skew. Interestingly, weather delayed flights have a multi-modal pressure distribution with centers at 1005 mbar and 1025 mbar. The weather delayed flights with higher pressure could be delayed due to other variables which aren't directly related to pressure.
+Low pressure systems typically lead to bad weather conditions due to the associated air movement and atmospheric instability. In areas of low pressure, air tends to rise, leading to the formation of clouds, precipitation, and potentially severe weather phenomena such as storms or hurricanes. Flights which aren't delayed have a clear median of 1013 mbar, with a light right-skew. Interestingly, weather delayed flights have a multi-modal pressure distribution with centers at 1005 mbar and 1025 mbar. The weather delayed flights with higher pressure could be delayed due to other variables which aren't directly related to pressure.
 
-```{r weather_data_humidity, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7}
+```{r weather_data_pressure, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 2.5, fig.width = 6}
 pressure_plot
 ```
 
-The most interesting plot is the temperature vs pressure plot, which approximately shows a negative relationship between the two variables. Lower temperatures result in higher pressure, this could explain the source of the delayed flights which have a have higher pressure. Lower temperatures are typically unfavorable for take-offs as it can cause frost/ice buildup on the aircraft and runway. Additionally temperatures over 18C cause lower pressures which which could result and unfavorable weather events such as ____. The area marked in green shows the range of temperatures and pressure striking an ideal balance for conditions for take off.  
+The most interesting plot is the temperature vs pressure plot, which approximately shows a negative relationship between the two variables. Lower temperatures result in higher pressure, this could explain the source of the delayed flights which have a have higher pressure. Lower temperatures are typically unfavorable for take-offs as it can cause frost/ice buildup on the aircraft and runway. The area marked in green shows the range of temperatures and pressure striking an ideal balance for conditions for take off.  
 
-```{r weather_data_humidity_vs_wind_speed, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7}
+```{r weather_data_temperature_vs_pressure, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 2.5, fig.width = 6}
 temp_vs_pressure_plot = ggplot(flights_weather_df, aes(x = temp, y = pressure, color = factor(IS_WEATHER_DELAY))) +
   annotate('rect', xmin = 3, xmax = 18, ymin = 980, ymax = 1050, alpha = 0.4, fill = 'green') +
   geom_point() +
@@ -316,7 +316,6 @@ I started with a decision tree model, and evaluated it's performance. I improved
 
 Normalisation was also applied to the all the variables independently between the training and validation splits to insure no information leakage. Normalizing variables ensures that each feature is on a similar scale. This is important because the chosen machine learning architectures can be sensitive to the relative scales of different variables. When variables have vastly different scales, it can lead to biased learning and an undue influence of variables with larger scales on the model training process.
 
-\pagebreak
 ## 6. Results and Interpretations
 
 ### Initial Modelling
@@ -331,15 +330,16 @@ Further research led me to remove the dew point variable from the dataset due to
 
 Overall, the model's performance is reasonably satisfactory, with XGBoost achieving the highest accuracy of 79%. It is worth noting that this accuracy represents a 30% improvement over random guessing on the test set. Although the model's predictive power is valuable, it also provides insights through model comparisons and identifying important features. Notably, the analysis reveals that categorical weather data is redundant or prone to errors, while the key features for distinguishing weather-delayed and non-delayed flights appear to be temperature, pressure, and humidity.
 
+\pagebreak
 #### Variable Importance Chart XGBoost (Numerical weather variables only, and removal of dew point)
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7} 
+```{r feature-importance, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 2.5, fig.width = 3.5} 
 knitr::include_graphics("../data/images/variable_importance_processed.png")
 ```
 
 #### Accuracy/F1 score of XGBoost Model (Numerical weather variables only, and removal of dew point)
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7} 
+```{r accuracies, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 2, fig.width = 2} 
 knitr::include_graphics("../data/images/xgboost_accuracy_f1_score.png")
 knitr::include_graphics("../data/images/xgboost_confusion_matrix.png")
 ```
@@ -356,10 +356,11 @@ Among the weather variables, temperature remained the most influential, followed
 
 #### Plot of Weather Data Sample locations for each flight path
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", fig.height = 3, fig.width = 7} 
+```{r spatial-map, echo=FALSE, message=FALSE, warning=FALSE, fig.align = "center", out.width="75%"} 
 knitr::include_graphics("../data/images/spatial_data_plot.png")
 ```
 
+\pagebreak
 ## 7. Discussion
 
 ### Implications
@@ -388,25 +389,15 @@ A further extension of this project would involve building models to predict wea
 
 ### General Strengths and Weaknesses of Modelling
 
-- haven't tested on other airports. Can try
+The final model demonstrated strong performance, achieving an accuracy and F1 score of 82%. This favorable outcome was achieved by employing a simple yet effective model architecture, XGBoost, coupled with preprocessing techniques such as averaging and normalization. Tree-based models, like XGBoost, offer advantages in modeling weather-related delays by not requiring distribution assumptions and providing flexibility. Exploratory analysis and variable importance plots indicated that temperature, pressure, and humidity were the most influential variables in distinguishing between weather-delayed and other flights.
 
-The final model performed well with an accuracy and F1 score of 
+However, it's important to acknowledge that the final model might not have captured all the intricate relationships in the data. For instance, smaller planes are more susceptible to weather disruptions compared to larger aircraft, which affects the likelihood of weather-related delays. Accounting for this factor could involve categorizing plane models and assessing their predictive importance in weather delay modeling.
 
-Strengths
-- Relatively simple model architectures
-- Only really need to normalise as a preprocessing technique (which needs to ensure not information leakage)
-- Don't have distribution assumptions
-- Able to make some sort of inference i.e variable important, categorical vs numeric weather data
-- Important features
+Furthermore, the model was trained solely on flights departing from O'Hare Chicago Airport, which simplifies the problem but introduces bias when predicting delays for flights departing from other airports with potentially different weather patterns. One approach to address this would be to develop individual models for major airports or climate zones across the US or create a single model trained on a representative distribution of flights from various airports.
 
-Other things to note are that small planes are more affected by bad weather compared to larger planes. This will affect the likelihood that the flight is delayed for weather reasons. The simplest way to model this is by adding route length into the model, as this is highly correlated with plane size. Then, we can determine how important it is at predicting weather delays.
+It's worth noting that the scheduled departure time might not precisely correspond to the actual takeoff time due to taxiing and other factors. Additionally, the calculation of positions and timestamps for the 50km and 100km points along the flight path relied on average flight speed, introducing some potential errors. However, considering the resolution of weather data capture, minor discrepancies in time or location should not significantly impact the results.
 
-Weaknesses
-- Change in model performance if applied to the original data.
-- Bias on certain locations/times
-- Influence from other factors such as airport location, carrier, aircraft type...
-- Didn't factor in taxi out and taxi in which causes errors in timing
-- Precipitation is highly correlated to things such as humidity
+For future models, it would be beneficial to incorporate more complex training data. An extension of this project could involve exploring advanced machine learning architectures such as neural networks, which have the capacity to capture intricate non-linear relationships when appropriately configured with multiple layers and optimized hyperparameters.
 
 \pagebreak
 ## 7. Appendix
