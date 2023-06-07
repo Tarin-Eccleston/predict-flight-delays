@@ -400,26 +400,49 @@ It's worth noting that the scheduled departure time might not precisely correspo
 For future models, it would be beneficial to incorporate more complex training data. An extension of this project could involve exploring advanced machine learning architectures such as neural networks, which have the capacity to capture intricate non-linear relationships when appropriately configured with multiple layers and optimized hyperparameters.
 
 \pagebreak
-## 7. Appendix
+## 8. Appendix
 
-### Data cleaning
+## Data Cleaning
+### Joining
 
 ```{r data-cleaning-ref, eval=FALSE, echo=TRUE, fig.align = "center"}
 setwd("/Users/tarineccleston/Documents/Software-DS/predict-flight-delays")
 library(tidyverse)
-library(ggplot2)
+library(timezonefinder)
 
 # read data
-flights_df = read.csv("data/flights.csv")
-airlines_df = read.csv("data/airlines.csv")
-airports_df = read.csv("data/airports.csv")
-cancellation_codes_df = read.csv("data/cancellation_codes.csv")
+flights_df = read.csv("data/input/flights.csv")
+airlines_df = read.csv("data/input/airlines.csv")
+airports_df = read.csv("data/input/airports.csv")
+
+# note: some states and multiple timezones, so I chose the most predominant ones
+state_timezone_df <- data.frame(
+  STATE = c(
+    "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", 
+    "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", 
+    "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", 
+    "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", 
+    "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
+  ),
+  TIMEZONE = c(
+    "US/Central", "America/Anchorage", "US/Mountain", "US/Central", "US/Pacific", "US/Mountain", "US/Eastern", "US/Eastern", "US/Eastern", "US/Eastern", 
+    "Pacific/Honolulu", "US/Mountain", "US/Central", "US/Eastern", "US/Central", "US/Central", "US/Eastern", "US/Central", "US/Eastern", "US/Eastern", 
+    "US/Eastern", "US/Eastern", "US/Central", "US/Central", "US/Central", "US/Mountain", "US/Central", "US/Pacific", "US/Eastern", "US/Eastern", 
+    "US/Mountain", "US/Eastern", "US/Eastern", "US/Central", "US/Eastern", "US/Central", "US/Pacific", "US/Eastern", "US/Eastern", "US/Eastern", 
+    "US/Central", "US/Eastern", "US/Central", "US/Mountain", "US/Eastern", "US/Eastern", "US/Pacific", "US/Eastern", "US/Central", "US/Mountain"
+  ),
+  stringsAsFactors = FALSE
+)
 
 flights_processed_df = data.frame(flights_df)
 
+airports_df = airports_df %>%
+  inner_join(state_timezone_df, by = "STATE", keep = NULL) %>%
+  relocate("TIMEZONE", .after = "COUNTRY")
+
 # remove columns which won't be useful for our prediction
 flights_processed_df = flights_processed_df %>%
-  select(-c("TAXI_OUT", "WHEELS_OFF", "SCHEDULED_TIME", "ELAPSED_TIME", "AIR_TIME", "DISTANCE", "WHEELS_ON", "TAXI_IN", "SCHEDULED_ARRIVAL", "ARRIVAL_TIME", "ARRIVAL_DELAY", "DIVERTED"))
+  select(-c("TAXI_OUT", "WHEELS_OFF", "ELAPSED_TIME", "AIR_TIME", "WHEELS_ON", "TAXI_IN", "ARRIVAL_TIME", "ARRIVAL_DELAY", "DIVERTED"))
 
 # join dataframes, use inner join for important information such as airline, departure and arrival airport
 # join flights and airline carrier data
@@ -432,12 +455,6 @@ flights_processed_df = flights_processed_df %>%
 # combine airline code and flight number together
 flights_processed_df$FLIGHT_NUMBER = paste0(flights_processed_df$AIRLINE_CODE, flights_processed_df$FLIGHT_NUMBER)
 
-# replace cancellation reason with cancellation description
-flights_processed_df = flights_processed_df %>%
-  left_join(cancellation_codes_df, by = "CANCELLATION_REASON", copy = FALSE, keep = NULL) %>%
-  relocate("CANCELLATION_DESCRIPTION", .after = "CANCELLATION_REASON") %>%
-  select(-CANCELLATION_REASON)
-
 # join flights and airports data to get airport names, city, state and coordinate data for arrival and departure
 colnames(flights_processed_df)[9] = "ORIGIN_AIRPORT_CODE"
 colnames(flights_processed_df)[10] = "DESTINATION_AIRPORT_CODE"
@@ -446,108 +463,23 @@ colnames(flights_processed_df)[10] = "DESTINATION_AIRPORT_CODE"
 colnames(airports_df)[1] = "ORIGIN_AIRPORT_CODE"
 flights_processed_df = flights_processed_df %>%
   inner_join(airports_df, by = "ORIGIN_AIRPORT_CODE", copy = FALSE, keep = NULL) %>%
-  rename_with(~ paste0("ORIGIN_", .), colnames(airports_df)[2:7]) %>%
-  relocate(paste0("ORIGIN_", colnames(airports_df)[2:7]), .after = "ORIGIN_AIRPORT_CODE")
-  
+  rename_with(~ paste0("ORIGIN_", .), colnames(airports_df)[2:8]) %>%
+  relocate(paste0("ORIGIN_", colnames(airports_df)[2:8]), .after = "ORIGIN_AIRPORT_CODE")
+
 # for destination airports
 colnames(airports_df)[1] = "DESTINATION_AIRPORT_CODE"
 flights_processed_df = flights_processed_df %>%
   inner_join(airports_df, by = "DESTINATION_AIRPORT_CODE", copy = FALSE, keep = NULL) %>%
-  rename_with(~ paste0("DESTINATION_", .), colnames(airports_df)[2:7]) %>%
-  relocate(paste0("DESTINATION_", colnames(airports_df)[2:7]), .after = "DESTINATION_AIRPORT_CODE")
+  rename_with(~ paste0("DESTINATION_", .), colnames(airports_df)[2:8]) %>%
+  relocate(paste0("DESTINATION_", colnames(airports_df)[2:8]), .after = "DESTINATION_AIRPORT_CODE")
 
-# if flight is delayed for more than 15 minutes due to weather or any other factors
-# we don't need to separate other delay types for this study
-# combine other delay times together
+# remove cancelled flights and cancellation information since we have very few examples and are only focused on delays
 flights_processed_df = flights_processed_df %>%
-  mutate(IS_OTHER_DELAY = ifelse((AIR_SYSTEM_DELAY >= 15) | (SECURITY_DELAY >= 15) | (AIRLINE_DELAY >= 15) | (LATE_AIRCRAFT_DELAY >= 15), 1, 0)) %>%
-  mutate(IS_WEATHER_DELAY = ifelse(WEATHER_DELAY >= 15, 1, 0)) %>%
-  mutate(OTHER_DELAY = AIR_SYSTEM_DELAY + SECURITY_DELAY + AIRLINE_DELAY + LATE_AIRCRAFT_DELAY) %>%
-  relocate("OTHER_DELAY", .before = "WEATHER_DELAY") %>%
-  select(-c("AIR_SYSTEM_DELAY", "SECURITY_DELAY", "AIRLINE_DELAY", "LATE_AIRCRAFT_DELAY"))
-
-# convert n/as for all delay durations to 0
-flights_processed_df["OTHER_DELAY"][is.na(flights_processed_df["OTHER_DELAY"])] = 0
-flights_processed_df["WEATHER_DELAY"][is.na(flights_processed_df["WEATHER_DELAY"])] = 0
-flights_processed_df["IS_OTHER_DELAY"][is.na(flights_processed_df["IS_OTHER_DELAY"])] = 0
-flights_processed_df["IS_WEATHER_DELAY"][is.na(flights_processed_df["IS_WEATHER_DELAY"])] = 0
-
-# convert numbers to string days of week
-day_names = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
-# Map day names to day numbers
-flights_processed_df = flights_processed_df %>% 
-  mutate(DAY_OF_WEEK = day_names[DAY_OF_WEEK])
-
-convert_time <- function(time) {
-  if (is.na(time)) {
-    return(NA)
-  } else if (time < 10) {
-    return(sprintf("00:0%s", time))
-  } else if (time < 60) {
-    return(sprintf("00:%s", time))
-  } else {
-    hours <- floor(time / 100)
-    minutes <- time %% 100
-    return(sprintf("%02d:%02d", hours, minutes))
-  }
-}
-
-# convert all hour times to HH:MM format
-# note: ignore effect of changing timezones and days for now
-flights_processed_df = flights_processed_df %>%
-  mutate(SCHEDULED_DEPARTURE = sapply(SCHEDULED_DEPARTURE, convert_time)) %>%
-  mutate(DEPARTURE_TIME = sapply(DEPARTURE_TIME, convert_time))
-
-flights_processed_df = flights_processed_df %>%
-  mutate(FLIGHT_DATETIME = as.POSIXct(paste(YEAR, MONTH, DAY), format = "%Y %m %d")) %>%
-  relocate(FLIGHT_DATETIME, .before = "YEAR") %>%
-  select(-c("YEAR", "MONTH", "DAY")) %>%
-  mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(FLIGHT_DATETIME, SCHEDULED_DEPARTURE), format = "%Y-%m-%d %H:%M")) %>%
-  relocate(SCHEDULED_DEPARTURE_DATETIME, .after = SCHEDULED_DEPARTURE) %>%
-  mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(FLIGHT_DATETIME, SCHEDULED_DEPARTURE), format = "%Y-%m-%d %H:%M")) %>%
-  mutate(DEPARTURE_DATETIME = SCHEDULED_DEPARTURE_DATETIME + 60 * DEPARTURE_DELAY) %>%
-  relocate(DEPARTURE_DATETIME, .after = DEPARTURE_TIME)
-
-# create index for each flight
-flights_processed_df = flights_processed_df %>%
-  mutate(INDEX = row.names(flights_processed_df)) %>%
-  relocate(INDEX, .before = "FLIGHT_DATETIME")
-
-# separate uncancelled and cancelled flights, not important at the moment but we will separate just in case
-flights_cancelled_df = flights_processed_df %>%
-  filter(CANCELLED == 1)
-
-flights_processed_df = flights_processed_df %>%
-  filter(CANCELLED == 0)
+  filter(CANCELLED == 0) %>%
+  select(-c("CANCELLED", "CANCELLATION_REASON"))
 
 # save whole data for exploratory analysis
-save(flights_cancelled_df, file = "output/flights_cancelled.RData")
-write.table(flights_cancelled_df, file = "output/flights_cancelled.csv", sep = ",", row.names = FALSE)
-save(flights_processed_df, file = "output/flights.RData")
-write.table(flights_processed_df, file = "output/flights.csv", sep = ",", row.names = FALSE)
-
-# create n sample subset from our original data
-# this will be used for gathering weather data and for building our model
-set.seed("991")
-n = 1000
-
-# randomly sample 1000 delayed flights
-delayed_flights_subset_df = flights_processed_df %>%
-  filter(IS_WEATHER_DELAY == TRUE) %>%
-  sample_n(n/2)
-
-# randomly sample 1000 on-time flights
-on_time_flights_subset_df = flights_processed_df %>%
-  filter(IS_WEATHER_DELAY == FALSE) %>%
-  sample_n(n/2)
-
-# combine and shuffle data sets
-flights_subset_df = rbind(delayed_flights_subset_df, on_time_flights_subset_df)
-flights_subset_df <- flights_subset_df[sample(nrow(flights_subset_df)), ]
-
-# save subset data for exploratory analysis
-save(flights_subset_df, file = "output/flights_subset.RData")
-write.table(flights_subset_df, file = "output/flights_subset.csv", sep = ",", row.names = FALSE)
+save(flights_processed_df, file = "data/intermediate/cleaning/flights_joined.RData")
 ```
 
 ### Visualisation
@@ -595,6 +527,277 @@ ggplot(flights_processed_df, aes(x = FLIGHT_DATETIME)) +
   scale_x_date(date_breaks = "1 month", date_labels = "%b %y") +
   labs(x = "Date", y = "Number of flights", title = "Distribution of flights per day in 2015")
 ```
+
+### Time Cleaning
+
+```{r time-cleaning, eval=FALSE, echo=TRUE}
+setwd("/Users/tarineccleston/Documents/Software-DS/predict-flight-delays")
+library(tidyverse)
+library(ggplot2)
+
+# read data
+load("data/intermediate/cleaning/flights_joined.RData")
+
+# if flight is delayed for more than 15 minutes due to weather or any other factors
+# we don't need to separate other delay types for this study
+# combine other delay times together
+flights_processed_df = flights_processed_df %>%
+  mutate(IS_OTHER_DELAY = ifelse((AIR_SYSTEM_DELAY >= 15) | (SECURITY_DELAY >= 15) | (AIRLINE_DELAY >= 15) | (LATE_AIRCRAFT_DELAY >= 15), 1, 0)) %>%
+  mutate(IS_WEATHER_DELAY = ifelse(WEATHER_DELAY >= 15, 1, 0)) %>%
+  mutate(OTHER_DELAY = AIR_SYSTEM_DELAY + SECURITY_DELAY + AIRLINE_DELAY + LATE_AIRCRAFT_DELAY) %>%
+  relocate("OTHER_DELAY", .before = "WEATHER_DELAY") %>%
+  select(-c("AIR_SYSTEM_DELAY", "SECURITY_DELAY", "AIRLINE_DELAY", "LATE_AIRCRAFT_DELAY"))
+
+# convert n/as for all delay durations to 0
+flights_processed_df["OTHER_DELAY"][is.na(flights_processed_df["OTHER_DELAY"])] = 0
+flights_processed_df["WEATHER_DELAY"][is.na(flights_processed_df["WEATHER_DELAY"])] = 0
+flights_processed_df["IS_OTHER_DELAY"][is.na(flights_processed_df["IS_OTHER_DELAY"])] = 0
+flights_processed_df["IS_WEATHER_DELAY"][is.na(flights_processed_df["IS_WEATHER_DELAY"])] = 0
+
+# convert numbers to string days of week
+day_names = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+# Map day names to day numbers
+flights_processed_df = flights_processed_df %>% 
+  mutate(DAY_OF_WEEK = day_names[DAY_OF_WEEK])
+
+# convert miles to km
+flights_processed_df = flights_processed_df %>%
+  mutate(DISTANCE = DISTANCE * 1.60934)
+
+# create index for each flight
+flights_processed_df = flights_processed_df %>%
+  mutate(INDEX = row.names(flights_processed_df)) %>%
+  relocate(INDEX, .before = "YEAR")
+
+# save whole data for exploratory analysis
+save(flights_processed_df, file = "data/intermediate/cleaning/flights_time_cleaned.RData")
+
+convert_time <- function(time) {
+  if (is.na(time)) {
+    return(NA)
+  } else if (time < 10) {
+    return(sprintf("00:0%s", time))
+  } else if (time < 60) {
+    return(sprintf("00:%s", time))
+  } else {
+    hours <- floor(time / 100)
+    minutes <- time %% 100
+    return(sprintf("%02d:%02d", hours, minutes))
+  }
+}
+
+# convert all hour times to HH:MM format
+flights_processed_df = flights_processed_df %>%
+  mutate(SCHEDULED_DEPARTURE = sapply(SCHEDULED_DEPARTURE, convert_time)) %>%
+  mutate(DEPARTURE_TIME = sapply(DEPARTURE_TIME, convert_time)) %>%
+  mutate(SCHEDULED_ARRIVAL = sapply(SCHEDULED_ARRIVAL, convert_time))
+
+flights_processed_df = flights_processed_df %>%
+  mutate(FLIGHT_DATETIME = as.POSIXct(paste(YEAR, MONTH, DAY), format = "%Y %m %d")) %>%
+  relocate(FLIGHT_DATETIME, .before = "YEAR") %>%
+  select(-c("YEAR", "MONTH", "DAY")) %>%
+  mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(FLIGHT_DATETIME, SCHEDULED_DEPARTURE), format = "%Y-%m-%d %H:%M")) %>%
+  relocate(SCHEDULED_DEPARTURE_DATETIME, .after = SCHEDULED_DEPARTURE)
+
+save(flights_processed_df, file = "data/intermediate/cleaning/flights_time_cleaned_analysis.RData")
+```
+
+### Normal Subset
+
+```{r normal-subject, eval=FALSE, echo=TRUE}
+setwd("/Users/tarineccleston/Documents/Software-DS/predict-flight-delays")
+library(tidyverse)
+library(ggplot2)
+
+# read data
+load("data/intermediate/cleaning/flights_time_cleaned.RData")
+
+# create n sample subset from our original data
+# this will be used for gathering weather data and for building our model
+set.seed("991")
+n = 5000
+
+num_airports = n_distinct(flights_processed_df$ORIGIN_AIRPORT)
+sample_size = round(n/num_airports)
+
+# filter the subset data to only include airports with enough weather-delayed flights
+
+filtered_airports = flights_processed_df %>%
+  filter(IS_WEATHER_DELAY == 1) %>%
+  group_by(ORIGIN_AIRPORT) %>%
+  summarise(WEATHER_DELAY_FLIGHT_COUNT = n()) %>%
+  filter(WEATHER_DELAY_FLIGHT_COUNT > sample_size) %>%
+  pull(ORIGIN_AIRPORT)
+
+sample_size = round(n/length(filtered_airports))
+
+# group the data by airport and whether the flight was delayed or not
+flights_subset_weather_delay_df = flights_processed_df %>% 
+  group_by(ORIGIN_AIRPORT, IS_WEATHER_DELAY) %>%
+  filter(ORIGIN_AIRPORT %in% filtered_airports) %>%
+  filter(IS_WEATHER_DELAY == 1) %>%
+  slice_sample(n = sample_size, replace = FALSE)
+
+# group the data by airport and whether the flight was delayed or not
+flights_subset_other_df = flights_processed_df %>% 
+  group_by(ORIGIN_AIRPORT, IS_WEATHER_DELAY) %>%
+  filter(ORIGIN_AIRPORT %in% filtered_airports) %>%
+  filter(IS_WEATHER_DELAY == 0) %>%
+  slice_sample(n = sample_size, replace = FALSE)
+
+flights_subset_df = rbind(flights_subset_weather_delay_df, flights_subset_other_df)
+
+# look at the class distribution of delayed with other flights between airports
+flights_subset_airports_df <- flights_subset_df %>% 
+  group_by(ORIGIN_AIRPORT) %>% 
+  summarise(total_count = n(),
+            delayed_count = sum(IS_WEATHER_DELAY),
+            non_delayed_count = total_count - delayed_count)
+
+# shuffle data
+flights_subset_df <- flights_subset_df[sample(nrow(flights_subset_df)), ]
+
+# save subset data for exploratory analysis
+save(flights_subset_df, file = "data/output/cleaning/flights_subset.RData")
+write.table(flights_subset_df, file = "data/output/cleaning/flights_subset.csv", sep = ",", row.names = FALSE)
+
+weather = read.csv("data/output/weather/weather_data.csv")
+weather$INDEX = as.numeric(weather$INDEX)
+
+weather_flights_joined = flights_processed_df %>%
+  inner_join(weather, by = "INDEX", keep = NULL)
+
+```
+
+### Spatial Subset
+
+```{r spatial-subject, eval=FALSE, echo=TRUE}
+setwd("/Users/tarineccleston/Documents/Software-DS/predict-flight-delays")
+library(tidyverse)
+library(ggplot2)
+library(geosphere)
+
+# read data
+load("data/intermediate/cleaning/flights_time_cleaned.RData")
+
+sample_size = 1000
+
+# summarise airports with the most weather delayed flights
+flight_summary = flights_processed_df %>%
+  group_by(ORIGIN_AIRPORT) %>%
+  summarize(
+    Weather_Delay_Frequency = sum(IS_WEATHER_DELAY == 1, na.rm = TRUE),
+    Non_Weather_Delay_Frequency = sum(IS_WEATHER_DELAY == 0, na.rm = TRUE)
+  ) %>%
+  arrange(desc(Weather_Delay_Frequency)) %>%
+  top_n(5)
+
+flight_summary$ORIGIN_AIRPORT <- factor(flight_summary$ORIGIN_AIRPORT,
+                                           levels = flight_summary$ORIGIN_AIRPORT[order(flight_summary$Weather_Delay_Frequency)])
+
+# Dallas/Fort Worth, Hartsfield-Jackson Atlanta International Airport, and O-Hare International Airport appear to have
+# the most weather delayed flights
+ggplot(flight_summary, aes(x = ORIGIN_AIRPORT, y = Weather_Delay_Frequency)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Top 5 Weather Delayed Airports", x = "Departure Airport", y = "Weather Delay Frequency") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# randomly sample only flights leaving from Chicago O'Hare for this model
+# weather delayed flights
+flights_subset_weather_delay_df <- flights_processed_df %>% 
+  filter(ORIGIN_AIRPORT_CODE %in% c("ORD") & IS_WEATHER_DELAY == 1) %>%
+  filter(DISTANCE > 100) %>%
+  slice_sample(n = sample_size/2, replace = FALSE)
+  
+flights_subset_non_weather_delay_df <- flights_processed_df %>% 
+  filter(ORIGIN_AIRPORT_CODE %in% c("ORD") & IS_WEATHER_DELAY == 0) %>%
+  filter(DISTANCE > 100) %>%
+  slice_sample(n = sample_size/2, replace = FALSE)
+
+# combine data
+flights_subset_df = rbind(flights_subset_weather_delay_df, flights_subset_non_weather_delay_df)
+
+# shuffle data
+flights_subset_df <- flights_subset_df[sample(nrow(flights_subset_df)), ]
+
+convert_time <- function(time) {
+  if (is.na(time)) {
+    return(NA)
+  } else if (time < 10) {
+    return(sprintf("00:0%s", time))
+  } else if (time < 60) {
+    return(sprintf("00:%s", time))
+  } else {
+    hours <- floor(time / 100)
+    minutes <- time %% 100
+    return(sprintf("%02d:%02d", hours, minutes))
+  }
+}
+
+# convert all hour times to HH:MM format
+flights_subset_df = flights_subset_df %>%
+  mutate(SCHEDULED_DEPARTURE = sapply(SCHEDULED_DEPARTURE, convert_time)) %>%
+  mutate(DEPARTURE_TIME = sapply(DEPARTURE_TIME, convert_time)) %>%
+  mutate(SCHEDULED_ARRIVAL = sapply(SCHEDULED_ARRIVAL, convert_time))
+
+# Note: there is an issue with the tz.. it appears that we need to add in the timezone manually. Reverts to UTC if we use timezone from the dataframe
+flights_subset_df = flights_subset_df %>%
+  mutate(FLIGHT_DATETIME = as.POSIXct(paste(YEAR, MONTH, DAY), format = "%Y %m %d")) %>%
+  relocate(FLIGHT_DATETIME, .before = "YEAR") %>%
+  select(-c("YEAR", "MONTH", "DAY")) %>%
+  mutate(SCHEDULED_DEPARTURE_DATETIME = as.POSIXct(paste(FLIGHT_DATETIME, SCHEDULED_DEPARTURE), format = "%Y-%m-%d %H:%M", tz = "US/Central")) %>%
+  relocate(SCHEDULED_DEPARTURE_DATETIME, .after = SCHEDULED_DEPARTURE)
+
+# convert to local time to UNIX timestamp by using timezone information
+flights_subset_df = flights_subset_df %>%
+   mutate(SCHEDULED_DEPARTURE_TIMESTAMP = as.numeric(SCHEDULED_DEPARTURE_DATETIME)) %>%
+   relocate(SCHEDULED_DEPARTURE_TIMESTAMP, .after = SCHEDULED_DEPARTURE_DATETIME)
+
+# add location and timestamp information for 2 other locations 50km and 100km along the flight path
+for (i in 1:1000) {
+  flights_subset_df$FLIGHT_BEARING[i] = bearingRhumb(
+    c(flights_subset_df$ORIGIN_LONGITUDE[i], flights_subset_df$ORIGIN_LATITUDE[i]),
+    c(flights_subset_df$DESTINATION_LONGITUDE[i], flights_subset_df$DESTINATION_LATITUDE[i])
+  )
+}
+
+for (i in 1:1000) {
+  flights_subset_df$LATITUDE_50KM[i] = destPoint(c(flights_subset_df$ORIGIN_LONGITUDE[i], flights_subset_df$ORIGIN_LATITUDE[i]), flights_subset_df$FLIGHT_BEARING[i], 50 * 1000)[2]
+  flights_subset_df$LONGITUDE_50KM[i] = destPoint(c(flights_subset_df$ORIGIN_LONGITUDE[i], flights_subset_df$ORIGIN_LATITUDE[i]), flights_subset_df$FLIGHT_BEARING[i], 50 * 1000)[1]
+  flights_subset_df$LATITUDE_100KM[i] = destPoint(c(flights_subset_df$ORIGIN_LONGITUDE[i], flights_subset_df$ORIGIN_LATITUDE[i]), flights_subset_df$FLIGHT_BEARING[i], 100 * 1000)[2]
+  flights_subset_df$LONGITUDE_100KM[i] = destPoint(c(flights_subset_df$ORIGIN_LONGITUDE[i], flights_subset_df$ORIGIN_LATITUDE[i]), flights_subset_df$FLIGHT_BEARING[i], 100 * 1000)[1]
+}
+
+flights_subset_df = flights_subset_df %>%
+  mutate(SCHEDULED_50KM_TIMESTAMP = SCHEDULED_DEPARTURE_TIMESTAMP + (50/DISTANCE * SCHEDULED_TIME * 60)) %>%
+  mutate(SCHEDULED_100KM_TIMESTAMP = SCHEDULED_DEPARTURE_TIMESTAMP + (100/DISTANCE * SCHEDULED_TIME * 60)) %>%
+  relocate(SCHEDULED_50KM_TIMESTAMP, .after = LONGITUDE_50KM) %>%
+  relocate(SCHEDULED_100KM_TIMESTAMP, .after = LONGITUDE_100KM)
+
+save(flights_subset_df, file = "data/intermediate/cleaning/flights_spatial_subset.RData")
+write.csv(flights_subset_df, "data/intermediate/cleaning/flights_spatial_subset.csv", row.names = FALSE)
+
+# __________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+# subset a random number fo 1000 flights in the US for testing on our model
+
+sample_test_size = 1000
+
+flights_test_subset_weather_delay_df = flights_processed_df %>%
+  filter(IS_WEATHER_DELAY == 1) %>%
+  slice_sample(n = sample_test_size/2, replace = FALSE)
+
+flights_test_subset_weather_other_df = flights_processed_df %>%
+  filter(IS_WEATHER_DELAY == 0) %>%
+  slice_sample(n = sample_test_size/2, replace = FALSE)
+
+# combine data
+flights_test_subset_df = rbind(flights_test_subset_weather_delay_df, flights_test_subset_weather_other_df)
+
+# shuffle data
+flights_test_subset_df <- flights_test_subset_df[sample(nrow(flights_test_subset_df)), ]
+```
+
+## Visualisation
 
 ```{r Q2, eval=FALSE, echo=TRUE}
 # date dataframe
@@ -748,14 +951,16 @@ fog_label_plot = ggplot(flights_weather_df, aes(x = fog, y = IS_WEATHER_DELAY, c
   labs(x = "Types of Fog", y = "Weather Delayed", title = "Fog vs Weather Delay")
 ```
 
-### Python Code to Extract Weather Data
+## Python Code to Collect Weather Data
 
 ```{r mining, eval=FALSE, echo=TRUE}
-### main.py
+### main_point.py
 
 from weather_miner import WeatherMiner
 import pandas as pd
 from dotenv import load_dotenv
+import time
+import math
 import os
 
 load_dotenv()
@@ -765,29 +970,133 @@ def main():
     api_key = os.getenv('API_KEY')
     weather_miner = WeatherMiner(api_username, api_key)
     
+    flights_df = pd.read_csv('data/intermediate/cleaning/flights_spatial_subset.csv')
+    weather_events = pd.DataFrame()
+
+    batch_size = 1000
+    batch_number = 1
+
+    # split data in batches so we don't loose progress on processing large datasets
+    while True:
+        weather_events = pd.DataFrame()
+        # upper and lower samples intervals for each batch
+        sample_range_lower = (batch_number-1)*batch_size
+        sample_range_upper = (batch_number-1)*batch_size+(batch_size-1)
+
+        # only get weather data which we don't have
+        if (~os.path.isfile('data/output/weather/weather_data_samples_' + str(sample_range_lower) + "-" + str(sample_range_upper) + '.csv')):
+            # gather weather data as rows and continuously append
+            for call_number in range(sample_range_lower, sample_range_upper + 1):
+                if (call_number > len(flights_df)-1):
+                    # smaller batch if last one is less than specified batch size
+                    weather_events.to_csv('data/intermediate/weather_sample_2/weather_data_samples_' + str(sample_range_lower) + "-" + str(call_number) + '.csv', index=False)
+                    break
+
+                airport_coord_lat = flights_df.loc[call_number,'ORIGIN_LATITUDE']
+                airport_coord_lon = flights_df.loc[call_number,'ORIGIN_LONGITUDE']
+                timestamp = flights_df.loc[call_number,'SCHEDULED_DEPARTURE_TIMESTAMP']
+
+                start = time.time()
+                weather_event = weather_miner.get_weather_event(airport_coord_lat, airport_coord_lon, timestamp)
+                end = time.time()
+
+                # use index so we can reference to our flight once we join the dataframes again
+                weather_event = pd.DataFrame([weather_event])
+                weather_event.insert(0, 'INDEX', flights_df.loc[call_number, 'INDEX'])
+                weather_event.insert(1, 'IS_WEATHER_DELAY', flights_df.loc[call_number, 'IS_WEATHER_DELAY'])
+
+                print("Batch number: ", batch_number, ", Call number: ", call_number, ", Latency: ", end - start)
+                print(weather_event)
+
+                # add each event to the overall events dataframe
+                weather_events = pd.concat([weather_events, weather_event], ignore_index=True)
+
+            weather_events.to_csv('data/intermediate/weather_sample_2/weather_data_samples_' + str(sample_range_lower) + "-" + str(sample_range_upper) + '.csv', index=False)
+        
+        batch_number = batch_number + 1
 
 
-    flights_df = pd.read_csv('output/flights_subset.csv')
-    weather_data = pd.DataFrame()
+if __name__ == "__main__": {
+    main()
+}
+        
+### main_spatial.py
+        
+from weather_miner import WeatherMiner
+import pandas as pd
+from dotenv import load_dotenv
+import time
+import math
+import os
 
-    # get timestamp for scheduled departure time
-    flights_df['SCHEDULED_DEPARTURE_DATETIME'] = pd.to_datetime(flights_df['SCHEDULED_DEPARTURE_DATETIME'], format='%Y-%m-%d %H:%M')
-    flights_df['SCHEDULED_DEPARTURE_TIMESTAMP'] = flights_df['SCHEDULED_DEPARTURE_DATETIME'].apply(lambda x: x.timestamp()).round(0).astype(int)
+load_dotenv()
+
+def main():
+    api_username = os.getenv('API_USERNAME')
+    api_key = os.getenv('API_KEY')
+    weather_miner = WeatherMiner(api_username, api_key)
     
-    # gather weather data as rows and continuously append
-    for i in range(0,len(flights_df)):
-        airport_code = flights_df.loc[i,'ORIGIN_AIRPORT_CODE']
-        timestamp = flights_df.loc[i,'SCHEDULED_DEPARTURE_TIMESTAMP']
+    flights_df = pd.read_csv('data/intermediate/cleaning/flights_spatial_subset.csv')
+    weather_event = pd.DataFrame()
+    weather_events = pd.DataFrame()
+    weather_events_batch = pd.DataFrame()
 
-        weather_event = weather_miner.get_weather_event(airport_code, timestamp)
+    lat_selector = ["ORIGIN_LATITUDE", "LATITUDE_50KM", "LATITUDE_100KM"]
+    lon_selector = ["ORIGIN_LONGITUDE", "LONGITUDE_50KM", "LONGITUDE_100KM"]
+    timestamp_selector = ["SCHEDULED_DEPARTURE_TIMESTAMP", "SCHEDULED_50KM_TIMESTAMP", "SCHEDULED_100KM_TIMESTAMP"]
+    suffixes = ["_origin", "_50km", "_100km"]
 
-        weather_event = pd.DataFrame([weather_event])
-        weather_event.insert(0, 'INDEX', flights_df.loc[i, 'INDEX'])
-        print(i)
-        print(weather_event)
-        weather_data = pd.concat([weather_data, weather_event], ignore_index=True)
+    batch_size = 100
+    batch_number = 1
 
-    weather_data.to_csv('output/weather_data.csv', index=False)
+    complete = False
+
+    # split data in batches so we don't loose progress on processing large datasets
+    while (~complete):
+        # reset batch dataframe
+        weather_events_batch = pd.DataFrame()
+        # upper and lower samples intervals for each batch
+        sample_range_lower = (batch_number-1)*batch_size
+        sample_range_upper = (batch_number-1)*batch_size+(batch_size-1)
+
+        # only get weather data which we don't have
+        if (~os.path.isfile('data/intermediate/weather_sample_3/weather_data_samples_' + str(sample_range_lower) + "-" + str(sample_range_upper) + '.csv')):
+            # gather weather data as rows and continuously append
+            for instance_number in range(sample_range_lower, sample_range_upper + 1):
+                # reset weather events dataframe
+                weather_events = pd.DataFrame()
+                if (instance_number > len(flights_df)-1):
+                    # smaller batch if last one is less than specified batch size
+                    weather_events_batch.to_csv('data/intermediate/weather_sample_2/weather_data_samples_' + str(sample_range_lower) + "-" + str(instance_number) + '.csv', index=False)
+                    complete = True
+                    break
+
+                start = time.time()
+                for call_number in range(0,3):
+                    lat = flights_df.loc[instance_number,lat_selector[call_number]]
+                    lon = flights_df.loc[instance_number,lon_selector[call_number]]
+                    timestamp = int(flights_df.loc[instance_number,timestamp_selector[call_number]].round())
+                    suffix = suffixes[call_number]
+
+                    weather_event = weather_miner.get_weather_event(lat, lon, timestamp)
+                    weather_event = pd.DataFrame([weather_event])
+                    weather_event = weather_event.add_suffix(suffix)
+                    weather_events = pd.concat([weather_events, weather_event], axis=1)
+                end = time.time()
+
+                # use index so we can reference to our flight once we join the dataframes again
+                weather_events.insert(0, 'INDEX', flights_df.loc[instance_number, 'INDEX'])
+                weather_events.insert(1, 'IS_WEATHER_DELAY', flights_df.loc[instance_number, 'IS_WEATHER_DELAY'])
+
+                print("Batch number: ", batch_number, ", Call number: ", instance_number, ", Latency: ", end - start)
+                print(weather_events)
+
+                # add each event to the overall events dataframe
+                weather_events_batch = pd.concat([weather_events_batch, weather_events], ignore_index=True)
+
+            weather_events_batch.to_csv('data/intermediate/weather_sample_3/weather_data_samples_' + str(sample_range_lower) + "-" + str(sample_range_upper) + '.csv', index=False)
+        
+        batch_number = batch_number + 1
 
 if __name__ == "__main__": {
     main()
@@ -800,39 +1109,36 @@ import datetime
 import random
 import json
 
-import airportsdata
-
 class WeatherMiner:
     def __init__(self, username, api_key):
         self.username = username
         self.api_key = api_key
         self.units = "metric"
         
-    def get_weather_event(self, airport_code, timestamp):
-        # get airport data
-        airports = airportsdata.load('IATA')  # use IATA identifier
-        airport = airports[airport_code]
-
-        response = requests.get(f"https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={airport['lat']}&lon={airport['lon']}&dt={timestamp}&appid={self.api_key}&units={self.units}")
+    def get_weather_event(self, coord_lat, coord_lon, timestamp):
+        response = requests.get(f"https://api.openweathermap.org/data/3.0/onecall/timemachine?lat={coord_lat}&lon={coord_lon}&dt={timestamp}&appid={self.api_key}&units={self.units}")
         if response.status_code == 200:
-            weather_event = response.json()
-
-            # gather only the weather data component of the dictionary
-            # weather_row = weather_row['data'][0]
+            weather_event_raw = response.json()
 
             weather_event = {
-                "temp": weather_event["data"][0].get("temp"),
-                "pressure": weather_event["data"][0].get("pressure"),
-                "humidity": weather_event["data"][0].get("humidity"),
-                "dew_point": weather_event["data"][0].get("dew_point"),
-                "clouds": weather_event["data"][0].get("clouds"),
-                "visibility": weather_event["data"][0].get("visibility"),
-                "wind_speed": weather_event["data"][0].get("wind_speed"),
-                "rainfall_1hr": weather_event["data"][0].get("rain", {}).get("1h"),
+                "temp": weather_event_raw["data"][0].get("temp"),
+                "pressure": weather_event_raw["data"][0].get("pressure"),
+                "humidity": weather_event_raw["data"][0].get("humidity"),
+                "clouds": weather_event_raw["data"][0].get("clouds"),
+                "visibility": weather_event_raw["data"][0].get("visibility"),
+                "wind_speed": weather_event_raw["data"][0].get("wind_speed"),
+                "rainfall_1hr": weather_event_raw["data"][0].get("rain", {}).get("1h", 0),
+                "rainfall_3hr": weather_event_raw["data"][0].get("rain", {}).get("3h", 0),
+                "snowfall_1hr": weather_event_raw["data"][0].get("snow", {}).get("1h", 0),  
+                "snowfall_3hr": weather_event_raw["data"][0].get("snow", {}).get("3h", 0),  
             }
-
             return weather_event
         else:
             print("Error: Could not retrieve weather data")
             return {}
 ```
+
+## Modeling
+### Point Data
+
+~ See attached documents ~
